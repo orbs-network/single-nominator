@@ -1,0 +1,1 @@
+cell config_param(int x) asm "CONFIGOPTPARAM";

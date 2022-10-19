@@ -1,0 +1,28 @@
+;; only the 256 bit part
+const elector256 = 23158417847463239084714197001737581570653996933128112807891516801582625927987;
+const config256 = 38597363079105398474523661669562635951089994888546854679819194669304376546645; 
+
+
+builder begin_cell1() asm "NEWC";
+cell end_cell1(builder b) asm "ENDC";
+builder store_slice1(builder b, slice s) asm "STSLICER";
+slice skip_bits1(slice s, int len) asm "SDSKIPFIRST";
+
+(cell) addr256ToCell(int addr256) inline {
+    return begin_cell1().store_uint(addr256, 256).end_cell1();
+}
+
+(cell) config_param(int id) {
+    int z = 5;
+    if( id == 1 ) {
+        return addr256ToCell(elector256);
+    } 
+
+    if( id == 0 ) {
+        
+        return addr256ToCell(config256);
+    }
+
+    return addr256ToCell(0); ;; TODO
+}
+

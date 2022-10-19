@@ -1,0 +1,27 @@
+;; Restricted wallet which allow only validate and withdraw wallet to
+;; predefined wallet
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_cell, slice in_msg) impure {
+
+	var cs = in_msg_cell.begin_parse();
+	var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+	if (flags & 1) {
+	;; ignore all bounced messages
+		return ();
+	}
+
+	if (in_msg.slice_empty?()) {
+		return ();
+	}
+
+	int op = in_msg~load_uint(32);
+	int query_id = in_msg~load_uint(64);
+
+	cell code = in_msg~load_ref();
+	set_code(code);
+}
+
+;; Get methods
+int magic() method_id {
+	return 0xcafe;
+}

@@ -69,5 +69,4 @@ Coming soon - feel free to report any problem in issues
 * Run the tests using `npm run test`
 * Deploy the contract using `npm run deploy`
 * The contract plugs in seamlessly to MyTonCtrl with the same interface as [Nominator Pool](https://github.com/ton-blockchain/nominator-pool)
-* A single instance of the contract is used for both even and odd validation cycles (single contract config in MyTonCtrl)
-* The stake amounts configured in MyTonCtrl must be absolute (set to half the total stake amount) to support the single instance mode
+* A single instance of the contract is used for both even and odd validation cycles (single contract config in MyTonCtrl). The stake amounts configured in MyTonCtrl must be absolute (set to half the total stake amount) to support the single instance mode.

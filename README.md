@@ -97,7 +97,7 @@ This setup replaces the standard wallet with a [restricted-wallet](https://githu
 
 <img src="https://i.imgur.com/kN3LluH.png" width=900 />
 
-The restricted wallet is unmaintained (replaced by nominator-pool) and has unresolved attack vectors like gas drainage attacks. Since the same wallet holds both gas fees and the stake principal in the same balance, an attacker that compromises the private key can generate transactions that will cause significant principal losses.
+The restricted wallet is unmaintained (replaced by nominator-pool) and has unresolved attack vectors like gas drainage attacks. Since the same wallet holds both gas fees and the stake principal in the same balance, an attacker that compromises the private key can generate transactions that will cause significant principal losses. In addition, there's a race condition between the attacker and the owner when trying to withdraw due to seqno collisions.
 
 ---
 
@@ -113,8 +113,8 @@ The nominator pool contract is overly complex due to the support of 40 concurren
 
 ### 4. Single nominator
 
-This is the setup implemented in this repo. It's a simplified version of the nominator pool that supports a single nominator and does not need to protect this nominator from the contract deployer as they are the same entity.
+This is the setup implemented in this repo. It's a very simplified version of the nominator pool that supports a single nominator and does not need to protect this nominator from the contract deployer as they are the same entity.
 
 <img src="https://i.imgur.com/YPuRUqr.png" width=900 />
 
-If you have a single nominator that holds all stake for validation, this is the most secure setup you can use.
+If you have a single nominator that holds all stake for validation, this is the most secure setup you can use. On top of the simplicity, this contract provides the owner with multiple emergency safeguards that can recover stake even in extreme scenarios like *Elector* upgrades that break the recover stake interface.

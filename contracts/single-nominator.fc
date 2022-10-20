@@ -1,3 +1,7 @@
+;; this contract is very similar to https://github.com/ton-blockchain/nominator-pool but much simpler since it only supports a single nominator
+;; frankly speaking, we tried using nominator-pool but it's so complicated that we couldn't be sure there were no bugs hiding around
+;; this contract is very simple and easy to review, it is laser focused on protecting your stake and nothing else!
+
 ;; =============== consts =============================
 
 const BOUNCEABLE = 0x18;

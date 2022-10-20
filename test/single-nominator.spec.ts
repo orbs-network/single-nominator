@@ -1,7 +1,7 @@
 import {KeyPair} from "ton-crypto";
 import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
-import {assert, expect} from "chai";
-import {filterLogs, initDeployKey} from "../src/utils";
+import {expect} from "chai";
+import {initDeployKey} from "../src/utils";
 import { SingleNominator } from "../src/single-nominator";
 import { compileFuncToB64 } from "../src/utils";
 

@@ -62,7 +62,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
     }
 
     slice cs = in_msg_full.begin_parse();
-    int flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+    int flags = cs~load_uint(4); ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
     if (flags & 1) {
         ;; ignore all bounced messages
         return ();
@@ -74,7 +74,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
     int op = in_msg_body~load_uint(32);
     int query_id = in_msg_body~load_uint(64);
 
-    ;; owner_address role - cold wallet (private key that is not connected to the internet) that owns the funds used for staking and acts as the single nominator
+    ;; owner role - cold wallet (private key that is not connected to the internet) that owns the funds used for staking and acts as the single nominator
     if (equal_slices(sender, owner_address)) {
 
         ;; allow owner_address to withdraw funds - take the money home and stop validating with it
@@ -106,7 +106,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
         }
     }
 
-    ;; validator_address role - the wallet whose private key is on the validator_address node (can sign blocks but can't steal the funds used for stake)
+    ;; validator role - the wallet whose private key is on the validator node (can sign blocks but can't steal the funds used for stake)
     if (equal_slices(sender, validator_address)) {
 
         ;; send stake to the elector for the next validation cycle (sent every period ~18 hours)

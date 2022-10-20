@@ -61,9 +61,13 @@ Coming soon - feel free to report any problem in issues
 
 &nbsp;
 
-## Development
+## Using this contract
 
+* Review the [contract](https://github.com/orbs-network/single-nominator/blob/main/contracts/single-nominator.fc) and tests to make sure you're happy with the implementation
 * Install the project using `npm install` (make sure you have all dependencies from [tonstarter](https://github.com/ton-defi-org/tonstarter-contracts))
 * Build the contract using `npm run build`
 * Run the tests using `npm run test`
 * Deploy the contract using `npm run deploy`
+* The contract plugs in seamlessly to MyTonCtrl with the same interface as [Nominator Pool](https://github.com/ton-blockchain/nominator-pool)
+* A single instance of the contract is used for both even and odd validation cycles (single contract config in MyTonCtrl)
+* The stake amounts configured in MyTonCtrl must be absolute (set to half the total stake amount) to support the single instance mode

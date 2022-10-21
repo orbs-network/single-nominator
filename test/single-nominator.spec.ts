@@ -1,9 +1,9 @@
 import {KeyPair} from "ton-crypto";
 import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
 import {expect} from "chai";
-import {initDeployKey} from "../src/utils";
-import { SingleNominator } from "../src/single-nominator";
-import { compileFuncToB64 } from "../src/utils";
+import {initDeployKey} from "../contract-ts/utils";
+import { SingleNominator } from "../contract-ts/single-nominator";
+import { compileFuncToB64 } from "../contract-ts/utils";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 const config = Address.parse("Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn");
@@ -290,7 +290,7 @@ describe("firewall test suite", () => {
 
     it.only("upgrade code by owner", async () => {
 
-		const firewallCodeB64: string = compileFuncToB64(["contracts/imports/stdlib-single-nominator.fc","contracts/single-nominator.fc"]);
+		const firewallCodeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
 		let codeCell = Cell.fromBoc(firewallCodeB64);
 
 		const message = new InternalMessage({

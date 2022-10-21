@@ -1,12 +1,12 @@
 import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "./helpers";
-import { SingleNominatorContract } from "../contracts/single-nominator-contract";
-import { SingleNominatorSource } from "../contracts/single-nominator-source";
+import { SingleNominatorContract } from "../contract-ts/single-nominator-contract";
+import { SingleNominatorSource } from "../contract-ts/single-nominator-source";
 
 import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell } from "ton";
 
 import { waitForSeqno } from "./helpers";
 import { expect } from "chai";
-import {compileFuncToB64} from "../src/utils";
+import {compileFuncToB64} from "../contract-ts/utils";
 import {Buffer} from "buffer";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");

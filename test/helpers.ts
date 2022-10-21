@@ -21,8 +21,8 @@ import fs from "fs";
 export type SendMsgOutAction = { type: "send_msg"; message: RawMessage; mode: number };
 export type ReserveCurrencyAction = { type: "reserve_currency"; mode: number; currency: RawCurrencyCollection };
 export type UnknownOutAction = { type: "unknown" };
-import { SingleNominatorContract } from "../contracts/single-nominator-contract";
-import { SingleNominatorSource } from "../contracts/single-nominator-source";
+import { SingleNominatorContract } from "../contract-ts/single-nominator-contract";
+import { SingleNominatorSource } from "../contract-ts/single-nominator-source";
 
 export type OutAction = SendMsgOutAction | ReserveCurrencyAction | UnknownOutAction;
 

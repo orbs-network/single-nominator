@@ -1,6 +1,6 @@
 import { Address, Cell, ConfigStore, ContractSource } from "ton";
 import { Maybe } from "ton/dist/types";
-import { SingleNominator } from "../src/single-nominator";
+import { SingleNominator } from "./single-nominator";
 
 export class SingleNominatorSource implements ContractSource {
   static create(opts: { owner: Address; validator: Address }) {

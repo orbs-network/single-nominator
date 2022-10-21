@@ -22,7 +22,7 @@ export class SingleNominator {
     }
 
     static getCode(isUnitTest: boolean): Cell[] {
-        const jettonWalletCodeB64: string = compileFuncToB64([isUnitTest ? "contracts/test-config.fc" : "contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/imports/nonstdlib.fc", "contracts/single-nominator.fc"]);
+        const jettonWalletCodeB64: string = compileFuncToB64([isUnitTest ? "test/contracts/test-config.fc" : "contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/imports/nonstdlib.fc", "contracts/single-nominator.fc"]);
         return Cell.fromBoc(jettonWalletCodeB64);
     }
 

@@ -1,0 +1,16 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ."<amount>" cr
+  ."Creates a transfer message body" cr 1 halt
+} : usage
+$# 1- -1 and ' usage if
+
+$1 $>GR =: amount
+
+<b 4100 32 u, 1 64 u, amount Gram, b> =: body_boc
+body_boc <s csr.
+body_boc 2 boc+>B
+"set-validator.boc" tuck B>file
+."(Saved witdhraw query to file to file " type .")" cr

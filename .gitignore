@@ -3,3 +3,4 @@ node_modules
 .wget-hsts
 bin
 *.boc
+deploy.config.json

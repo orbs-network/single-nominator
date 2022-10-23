@@ -3,9 +3,8 @@ import { SingleNominatorContract } from "../contract-ts/single-nominator-contrac
 
 import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell } from "ton";
 
-import { waitForSeqno } from "./helpers";
+import {waitForSeqno, compileFuncToB64} from "./helpers";
 import { expect } from "chai";
-import {compileFuncToB64} from "../contract-ts/utils";
 import {Buffer} from "buffer";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");

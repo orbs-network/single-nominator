@@ -1,9 +1,8 @@
 import {KeyPair} from "ton-crypto";
 import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
 import {expect} from "chai";
-import {initDeployKey} from "../contract-ts/utils";
+import {initDeployKey, compileFuncToB64} from "./helpers";
 import { SingleNominator } from "../contract-ts/single-nominator";
-import { compileFuncToB64 } from "../contract-ts/utils";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 const config = Address.parse("Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn");

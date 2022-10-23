@@ -1,7 +1,7 @@
 import BN from "bn.js";
 import { Address, beginCell, Cell, contractAddress, InternalMessage, toNano } from "ton";
 import { SmartContract } from "ton-contract-executor";
-import { compileFuncToB64 } from "./utils";
+import { compileFuncToB64 } from "../test/helpers";
 
 
 export class SingleNominator {

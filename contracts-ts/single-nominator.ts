@@ -1,6 +1,6 @@
 import {Address, Cell, Contract, contractAddress, ContractSource, InternalMessage, Message, TonClient} from "ton";
 import {sign} from "ton-crypto";
-import {compileFuncToB64} from "../helpers";
+import {compileFuncToB64} from "../test/helpers";
 
 export type Maybe<T> = T | null | undefined;
 
@@ -75,51 +75,7 @@ export class SingleNominator implements Contract {
     }
 
     static getCode(): Cell[] {
-        const nominatorCode: string = compileFuncToB64(["contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
+        const nominatorCode: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
         return Cell.fromBoc(nominatorCode);
-    }
-
-    async getSeqNo(client: TonClient) {
-        if (await client.isContractDeployed(this.address)) {
-            let res = await client.callGetMethod(this.address, 'seqno');
-            return parseInt(res.stack[0][1], 16);
-        } else {
-            return 0;
-        }
-    }
-
-    async createTransfer(args: {
-        seqno: number,
-        sendMode: number,
-        walletId: number,
-        order: InternalMessage | null,
-        secretKey?: Maybe<Buffer>,
-        timeout?: Maybe<number>
-    }) {
-
-        let signingMessage = new WalletV3SigningMessage({
-            timeout: args.timeout,
-            walletId: args.walletId,
-            seqno: args.seqno,
-            sendMode: args.sendMode,
-            order: args.order
-        });
-
-        // Sign message
-        const cell = new Cell();
-        signingMessage.writeTo(cell);
-        let signature: Buffer;
-        if (args.secretKey) {
-            signature = sign(cell.hash(), args.secretKey);
-        } else {
-            signature = Buffer.alloc(64);
-        }
-
-        // Body
-        const body = new Cell();
-        body.bits.writeBuffer(signature);
-        signingMessage.writeTo(body);
-
-        return body;
     }
 }

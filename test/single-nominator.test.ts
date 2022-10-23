@@ -1,8 +1,8 @@
 import {KeyPair} from "ton-crypto";
 import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
 import {expect} from "chai";
-import {initDeployKey, compileFuncToB64} from "../helpers";
-import { SingleNominatorSpec } from "../contracts-ts/single-nominator-spec";
+import {initDeployKey, compileFuncToB64} from "./helpers";
+import { SingleNominatorMock } from "../contracts-ts/single-nominator-mock";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 const config = Address.parse("Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn");
@@ -25,11 +25,11 @@ const WRONG_QUERY_ID = 0x2003;
 
 describe("firewall test suite", () => {
     let walletKeys: KeyPair;
-    let fireWall: SingleNominatorSpec;
+    let fireWall: SingleNominatorMock;
 
     beforeEach(async () => {
         walletKeys = await initDeployKey();
-        fireWall = await SingleNominatorSpec.Create(toNano(10000), owner, validator_masterchain);
+        fireWall = await SingleNominatorMock.Create(toNano(10000), owner, validator_masterchain);
     });
 
     it("send coins to contract ( empty message)", async () => {
@@ -89,7 +89,7 @@ describe("firewall test suite", () => {
 
     it("send elector NEW_STAKE opcode with validator on basechain should pass", async () => {
 
-        let fireWall = await SingleNominatorSpec.Create(toNano(10), owner, validator_basechain, -1);
+        let fireWall = await SingleNominatorMock.Create(toNano(10), owner, validator_basechain, -1);
 
         const message = new InternalMessage({
             from: validator_basechain,
@@ -109,7 +109,7 @@ describe("firewall test suite", () => {
 
     it("send elector NEW_STAKE opcode with firewall on basechain should fail", async () => {
 
-        let fireWall = await SingleNominatorSpec.Create(toNano(10), owner, validator_masterchain, 0);
+        let fireWall = await SingleNominatorMock.Create(toNano(10), owner, validator_masterchain, 0);
 
         const message = new InternalMessage({
             from: validator_masterchain,

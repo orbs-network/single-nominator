@@ -1,9 +1,9 @@
-import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "../helpers";
+import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "./helpers";
 import { SingleNominator } from "../contracts-ts/single-nominator";
 
 import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell } from "ton";
 
-import {waitForSeqno, compileFuncToB64} from "../helpers";
+import {waitForSeqno, compileFuncToB64} from "./helpers";
 import { expect } from "chai";
 import {Buffer} from "buffer";
 
@@ -389,7 +389,7 @@ describe("e2e test suite", () => {
 
     balance = parseFloat(fromNano((await client.getBalance(firewallContract.address)).toNumber()));
 
-	let codeB64: string = compileFuncToB64(["contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/imports/nonstdlib.fc", "contracts/test.fc"]);
+	let codeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/test-upgrade.fc"]);
 	let code = Cell.fromBoc(codeB64);
 
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
@@ -401,7 +401,7 @@ describe("e2e test suite", () => {
 	res = await client.callGetMethod(firewallContract.address, 'magic');
     expect(res.stack[0][1]).to.eq('0xcafe');
 
-	codeB64 = compileFuncToB64(["contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/imports/nonstdlib.fc", "contracts/single-nominator.fc"]);
+	codeB64 = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
 	code = Cell.fromBoc(codeB64);
 
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)

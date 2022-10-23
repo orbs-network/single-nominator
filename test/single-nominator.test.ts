@@ -132,6 +132,8 @@ describe("single nominator test suite", () => {
 
     it.only("send elector RECOVER_STAKE opcode", async () => {
 
+        nominator = await SingleNominatorMock.Create(toNano(1), owner, validator_masterchain);
+
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,

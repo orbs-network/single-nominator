@@ -19,17 +19,17 @@ const UPGRADE = 0x1001;
 const CHANGE_VALIDATOR_ADDRESS = 0x1003;
 const WITHDRAW = 0x1004;
 
-const WRONG_FIREWALL_WC = 0x2001;
+const WRONG_NOMINATOR_WC = 0x2001;
 const WRONG_OP = 0x2002;
 const WRONG_QUERY_ID = 0x2003;
 
-describe("firewall test suite", () => {
+describe("single nominator test suite", () => {
     let walletKeys: KeyPair;
-    let fireWall: SingleNominatorMock;
+    let nominator: SingleNominatorMock;
 
     beforeEach(async () => {
         walletKeys = await initDeployKey();
-        fireWall = await SingleNominatorMock.Create(toNano(10000), owner, validator_masterchain);
+        nominator = await SingleNominatorMock.Create(toNano(10000), owner, validator_masterchain);
     });
 
     it("send coins to contract ( empty message)", async () => {
@@ -37,14 +37,14 @@ describe("firewall test suite", () => {
         const body = beginCell().endCell();
         const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(body)
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.actionList.length).eq(1);
         expect(res.exit_code).eq(0);
@@ -55,14 +55,14 @@ describe("firewall test suite", () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).storeCoins(toNano(1)).storeUint(1, 8).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.actionList.length).eq(1);
         expect(res.exit_code).eq(0);
@@ -73,14 +73,14 @@ describe("firewall test suite", () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(RECOVER_STAKE, 32).storeUint(1, 64).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.actionList.length).eq(1);
         expect(res.exit_code).eq(0);
@@ -89,56 +89,56 @@ describe("firewall test suite", () => {
 
     it("send elector NEW_STAKE opcode with validator on basechain should pass", async () => {
 
-        let fireWall = await SingleNominatorMock.Create(toNano(10), owner, validator_basechain, -1);
+        let nominator = await SingleNominatorMock.Create(toNano(10), owner, validator_basechain, -1);
 
         const message = new InternalMessage({
             from: validator_basechain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).storeCoins(toNano(1)).storeUint(1, 8).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.actionList.length).eq(1);
         expect(res.exit_code).eq(0);
         expect(res.type).eq('success');
     });
 
-    it("send elector NEW_STAKE opcode with firewall on basechain should fail", async () => {
+    it("send elector NEW_STAKE opcode with nominator on basechain should fail", async () => {
 
-        let fireWall = await SingleNominatorMock.Create(toNano(10), owner, validator_masterchain, 0);
+        let nominator = await SingleNominatorMock.Create(toNano(10), owner, validator_masterchain, 0);
 
         const message = new InternalMessage({
             from: validator_masterchain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('failed');
         expect(res.actionList.length).eq(0);
-        expect(res.exit_code).eq(WRONG_FIREWALL_WC);
+        expect(res.exit_code).eq(WRONG_NOMINATOR_WC);
     });
 
  	it("send elector wrong opcode", async () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1.1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(0x50, 32).storeUint(1, 64).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('failed');
         expect(res.actionList.length).eq(0);
@@ -149,32 +149,32 @@ describe("firewall test suite", () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(1),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(0, 64).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('failed');
         expect(res.actionList.length).eq(0);
         expect(res.exit_code).eq(WRONG_QUERY_ID);
     });
 
-    it("owner withdraws from firewall", async () => {
+    it("owner withdraws from nominator", async () => {
 
 		const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(0.5),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(WITHDRAW, 32).storeUint(1, 64).storeCoins(1).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('success');
         expect(res.actionList.length).eq(1);
@@ -185,14 +185,14 @@ describe("firewall test suite", () => {
 
 		const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(0.5),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32).storeUint(1, 64).storeAddress(new_validator_masterchain).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('success');
         expect(res.actionList.length).eq(0);
@@ -203,14 +203,14 @@ describe("firewall test suite", () => {
 
 		const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(0.5),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32).storeUint(1, 64).storeAddress(validator_basechain).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('success');
         expect(res.actionList.length).eq(0);
@@ -234,14 +234,14 @@ describe("firewall test suite", () => {
 
 		const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(0.5),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64).storeUint(2, 8).storeRef(cell).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
+        let res = await nominator.sendInternalMessage(message);
 
         expect(res.type).eq('success');
         expect(res.actionList.length).eq(1);
@@ -250,20 +250,20 @@ describe("firewall test suite", () => {
 
     it.only("upgrade code by owner", async () => {
 
-		const firewallCodeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
-		let codeCell = Cell.fromBoc(firewallCodeB64);
+        const nominatorCode: string = compileFuncToB64(["test/contracts/stdlib.fc", "test/contracts/test-config-param.fc", "test/contracts/test-upgrade.fc"]);
+		let codeCell = Cell.fromBoc(nominatorCode);
 
 		const message = new InternalMessage({
             from: owner,
-            to: fireWall.address,
+            to: nominator.address,
             value: toNano(0.5),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(UPGRADE, 32).storeUint(1, 64).storeRef(codeCell[0]).endCell())
             })
         })
-        let res = await fireWall.sendInternalMessage(message);
-
+        let res = await nominator.sendInternalMessage(message);
+		
         expect(res.type).eq('success');
         expect(res.actionList.length).eq(2);
         expect(res.exit_code).eq(0);

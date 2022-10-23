@@ -22,7 +22,7 @@ export class SingleNominatorMock {
     }
 
     static getCode(): Cell[] {
-        const nominatorCode: string = compileFuncToB64(["test/contracts/test-config-param.fc", "contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
+        const nominatorCode: string = compileFuncToB64(["test/contracts/stdlib.fc", "test/contracts/test-config-param.fc", "contracts/single-nominator.fc"]);
         return Cell.fromBoc(nominatorCode);
     }
 

@@ -98,7 +98,7 @@ to set custom path to your func compiler please set  the env variable "export FU
         }
     }
 
-    const stdOut = execSync(`/usr/local/bin/fift -s src/print-hex.fif`).toString();
+    const stdOut = execSync(`/usr/local/bin/fift -s build/_print-hex.fif`).toString();
     return stdOut.trim();
 }
 

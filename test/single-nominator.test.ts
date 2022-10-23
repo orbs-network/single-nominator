@@ -14,14 +14,17 @@ const new_validator_masterchain = Address.parse("Ef89RBOf9PQfgYWux_etNzUNWjK_d7w
 const NEW_STAKE = 0x4e73744b;
 const RECOVER_STAKE = 0x47657424;
 
-const SEND_RAW_MSG = 0x1000;
-const UPGRADE = 0x1001;
-const CHANGE_VALIDATOR_ADDRESS = 0x1003;
-const WITHDRAW = 0x1004;
+const WITHDRAW = 0x1000;
+const CHANGE_VALIDATOR_ADDRESS = 0x1001;
+const SEND_RAW_MSG = 0x7702;
+const UPGRADE = 0x9903;
 
-const WRONG_NOMINATOR_WC = 0x2001;
-const WRONG_OP = 0x2002;
-const WRONG_QUERY_ID = 0x2003;
+const WRONG_NOMINATOR_WC = 0x2000;
+const WRONG_QUERY_ID = 0x2001;
+const WRONG_SET_CODE = 0x2002;
+const WRONG_VALIDIATOR_WC = 0x2003;
+const INSUFFICIENT_BALANCE = 0x2004;
+const INSUFFICIENT_ELECTOR_FEE = 0x2005;
 
 describe("single nominator test suite", () => {
     let walletKeys: KeyPair;
@@ -32,13 +35,13 @@ describe("single nominator test suite", () => {
         nominator = await SingleNominatorMock.Create(toNano(10000), owner, validator_masterchain);
     });
 
-    it("send coins to contract ( empty message)", async () => {
+    it("send coins to contract (empty message)", async () => {
 
         const body = beginCell().endCell();
         const message = new InternalMessage({
             from: owner,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(body)
@@ -46,20 +49,78 @@ describe("single nominator test suite", () => {
         })
         let res = await nominator.sendInternalMessage(message);
 
-        expect(res.actionList.length).eq(1);
+        expect(res.actionList.length).eq(0);
         expect(res.exit_code).eq(0);
         expect(res.type).eq('success');
     });
 
-    it("send elector NEW_STAKE opcode", async () => {
+    it("send elector NEW_STAKE opcode with missing params should fail (cell underflow)", async () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
-                body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).storeCoins(toNano(1)).storeUint(1, 8).endCell())
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(1)) // coins
+					.endCell())
+            })
+        })
+        let res = await nominator.sendInternalMessage(message);
+
+        expect(res.actionList.length).eq(0);
+        expect(res.exit_code).eq(0);
+        expect(res.type).eq('failed');
+    });
+
+    it("send elector NEW_STAKE opcode with 0.1 coins should fail", async () => {
+
+        const message = new InternalMessage({
+            from: validator_masterchain,
+            to: nominator.address,
+            value: toNano(.1),
+            bounce:true,
+            body: new CommonMessageInfo({
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(.1)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
+            })
+        })
+        let res = await nominator.sendInternalMessage(message);
+
+        expect(res.actionList.length).eq(0);
+        expect(res.exit_code).eq(INSUFFICIENT_ELECTOR_FEE);
+        expect(res.type).eq('failed');
+    });
+
+    it("send elector NEW_STAKE opcode should pass ", async () => {
+
+        const message = new InternalMessage({
+            from: validator_masterchain,
+            to: nominator.address,
+            value: toNano(1.234),
+            bounce:true,
+            body: new CommonMessageInfo({
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(.1)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
             })
         })
         let res = await nominator.sendInternalMessage(message);
@@ -69,7 +130,7 @@ describe("single nominator test suite", () => {
         expect(res.type).eq('success');
     });
 
-    it("send elector RECOVER_STAKE opcode", async () => {
+    it.only("send elector RECOVER_STAKE opcode", async () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
@@ -142,7 +203,7 @@ describe("single nominator test suite", () => {
 
         expect(res.type).eq('failed');
         expect(res.actionList.length).eq(0);
-        expect(res.exit_code).eq(WRONG_OP);
+        expect(res.exit_code).eq(WRONG_SET_CODE);
     });
 
  	it("send elector wrong query_id", async () => {
@@ -248,7 +309,7 @@ describe("single nominator test suite", () => {
         expect(res.exit_code).eq(0);
     });
 
-    it.only("upgrade code by owner", async () => {
+    it("upgrade code by owner", async () => {
 
         const nominatorCode: string = compileFuncToB64(["test/contracts/stdlib.fc", "test/contracts/test-config-param.fc", "test/contracts/test-upgrade.fc"]);
 		let codeCell = Cell.fromBoc(nominatorCode);
@@ -263,9 +324,9 @@ describe("single nominator test suite", () => {
             })
         })
         let res = await nominator.sendInternalMessage(message);
-		
+
         expect(res.type).eq('success');
-        expect(res.actionList.length).eq(2);
+        expect(res.actionList.length).eq(1);
         expect(res.exit_code).eq(0);
     });
 

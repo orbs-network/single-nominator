@@ -12,7 +12,7 @@ export class SingleNominatorMock {
         this.contract = contract;
         this.address = myAddress;
         contract.setC7Config({
-            balance: balance.toNumber(),
+            balance: balance,
             myself: myAddress,
         });
     }
@@ -26,14 +26,14 @@ export class SingleNominatorMock {
         return Cell.fromBoc(nominatorCode);
     }
 
-    static async Create(balance = toNano(10), owner: Address, validator: Address, firewall_wc = -1, isUnitTest = true) {
+    static async Create(balance = toNano(10), owner: Address, validator: Address, workchain = -1) {
         const codeCell = SingleNominatorMock.getCode()[0];
         const dataCell = beginCell().storeAddress(owner).storeAddress(validator).endCell();
         const contract = await SmartContract.fromCell(codeCell, dataCell, {
             getMethodsMutate: true,
             debug: true,
         });
-        const myAddress = contractAddress({ workchain: firewall_wc, initialCode: codeCell, initialData: dataCell });
+        const myAddress = contractAddress({ workchain: workchain, initialCode: codeCell, initialData: dataCell });
         return new SingleNominatorMock(contract, myAddress, balance);
     }
 }

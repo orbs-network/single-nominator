@@ -1,6 +1,5 @@
 import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "./helpers";
 import { SingleNominatorContract } from "../contract-ts/single-nominator-contract";
-import { SingleNominatorSource } from "../contract-ts/single-nominator-source";
 
 import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell } from "ton";
 
@@ -49,8 +48,7 @@ async function deployFirewall(
   privateKey: Buffer
 ) {
 
-  const source = SingleNominatorSource.create({owner, validator});
-  const contract = await SingleNominatorContract.create(source);
+  const contract = await SingleNominatorContract.create({owner, validator});
 
   if (await client.isContractDeployed(contract.address)) {
     console.log(`contract: ${contract.address.toFriendly()} already Deployed`);

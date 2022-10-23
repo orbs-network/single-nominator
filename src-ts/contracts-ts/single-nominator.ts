@@ -1,6 +1,6 @@
 import {Address, Cell, Contract, contractAddress, ContractSource, InternalMessage, Message, TonClient} from "ton";
 import {sign} from "ton-crypto";
-import {SingleNominator} from "./single-nominator";
+import {compileFuncToB64} from "../helpers";
 
 export type Maybe<T> = T | null | undefined;
 
@@ -54,16 +54,16 @@ class WalletV3SigningMessage implements Message {
     }
 }
 
-export class SingleNominatorContract implements Contract {
+export class SingleNominator implements Contract {
 
     static create(opts: {owner: Address; validator: Address}) {
 		// Build initial code and data
-		let initialCode = SingleNominator.getCode(false)[0];
+		let initialCode = this.getCode()[0];
 		let initialData = new Cell();
 		initialData.bits.writeAddress(opts.owner);
 		initialData.bits.writeAddress(opts.validator);
 
-        return new SingleNominatorContract(initialCode, initialData, -1);
+        return new SingleNominator(initialCode, initialData, -1);
     }
 
     readonly address: Address;
@@ -72,6 +72,11 @@ export class SingleNominatorContract implements Contract {
     constructor(initialCode: Cell, initialData: Cell, workchain = -1) {
         this.source = {initialCode: initialCode, initialData: initialData, workchain: -1} as ContractSource;
 		this.address = contractAddress({initialCode: initialCode, initialData: initialData, workchain: workchain});
+    }
+
+    static getCode(): Cell[] {
+        const nominatorCode: string = compileFuncToB64(["contracts/config.fc", "contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
+        return Cell.fromBoc(nominatorCode);
     }
 
     async getSeqNo(client: TonClient) {

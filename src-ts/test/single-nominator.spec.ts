@@ -1,8 +1,8 @@
 import {KeyPair} from "ton-crypto";
 import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
 import {expect} from "chai";
-import {initDeployKey, compileFuncToB64} from "./helpers";
-import { SingleNominator } from "../contract-ts/single-nominator";
+import {initDeployKey, compileFuncToB64} from "../helpers";
+import { SingleNominatorSpec } from "../contracts-ts/single-nominator-spec";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 const config = Address.parse("Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn");
@@ -16,24 +16,20 @@ const RECOVER_STAKE = 0x47657424;
 
 const SEND_RAW_MSG = 0x1000;
 const UPGRADE = 0x1001;
-const AFTER_UPGRADE = 0x1002;
 const CHANGE_VALIDATOR_ADDRESS = 0x1003;
 const WITHDRAW = 0x1004;
 
-const WRONG_VALDIATOR_WC = 0x2000;
 const WRONG_FIREWALL_WC = 0x2001;
 const WRONG_OP = 0x2002;
 const WRONG_QUERY_ID = 0x2003;
-const WRONG_SET_CODE = 0x2004;
-const INSUFFICENT_BALANCE = 0x2005;
 
 describe("firewall test suite", () => {
     let walletKeys: KeyPair;
-    let fireWall: SingleNominator;
+    let fireWall: SingleNominatorSpec;
 
     beforeEach(async () => {
         walletKeys = await initDeployKey();
-        fireWall = await SingleNominator.Create(toNano(10000), owner, validator_masterchain);
+        fireWall = await SingleNominatorSpec.Create(toNano(10000), owner, validator_masterchain);
     });
 
     it("send coins to contract ( empty message)", async () => {
@@ -93,7 +89,7 @@ describe("firewall test suite", () => {
 
     it("send elector NEW_STAKE opcode with validator on basechain should pass", async () => {
 
-        let fireWall = await SingleNominator.Create(toNano(10), owner, validator_basechain, -1);
+        let fireWall = await SingleNominatorSpec.Create(toNano(10), owner, validator_basechain, -1);
 
         const message = new InternalMessage({
             from: validator_basechain,
@@ -113,7 +109,7 @@ describe("firewall test suite", () => {
 
     it("send elector NEW_STAKE opcode with firewall on basechain should fail", async () => {
 
-        let fireWall = await SingleNominator.Create(toNano(10), owner, validator_masterchain, 0);
+        let fireWall = await SingleNominatorSpec.Create(toNano(10), owner, validator_masterchain, 0);
 
         const message = new InternalMessage({
             from: validator_masterchain,
@@ -185,24 +181,6 @@ describe("firewall test suite", () => {
         expect(res.exit_code).eq(0);
     });
 
-    // it("owner withdraws from firewall insufficient balance error", async () => {
-	//
-    //     const message = new InternalMessage({
-    //         from: owner,
-    //         to: fireWall.address,
-    //         value: toNano(0.5),
-    //         bounce:true,
-    //         body: new CommonMessageInfo({
-    //             body: new CellMessage(beginCell().storeUint(WITHDRAW, 32).storeUint(1, 64).storeCoins(toNano(1e6)).endCell())
-    //         })
-    //     })
-    //     let res = await fireWall.sendInternalMessage(message);
-	//
-    //     expect(res.type).eq('failed');
-    //     expect(res.actionList.length).eq(0);
-    //     expect(res.exit_code).eq(INSUFFICENT_BALANCE);
-    // });
-
     it("change validator address by owner", async () => {
 
 		const message = new InternalMessage({
@@ -270,23 +248,6 @@ describe("firewall test suite", () => {
         expect(res.exit_code).eq(0);
     });
 
-    // it("owner send empty raw message should fail", async () => {
-	//
-	// 	const message = new InternalMessage({
-    //         from: owner,
-    //         to: fireWall.address,
-    //         value: toNano(0.5),
-    //         bounce:true,
-    //         body: new CommonMessageInfo({
-    //             body: new CellMessage(beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64).storeUint(2, 8).storeRef(cell).endCell())
-    //         })
-    //     })
-    //     let res = await fireWall.sendInternalMessage(message);
-	// 	console.log(res);
-    //     expect(res.actionList.length).eq(0);
-    //     expect(res.exit_code).eq(0);
-    // });
-
     it.only("upgrade code by owner", async () => {
 
 		const firewallCodeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
@@ -307,25 +268,5 @@ describe("firewall test suite", () => {
         expect(res.actionList.length).eq(2);
         expect(res.exit_code).eq(0);
     });
-
-    // it.only("upgrade code with empty cell should fail", async () => {
-	//
-	// 	let codeCell = Cell.fromBoc("");
-	//
-	// 	const message = new InternalMessage({
-    //         from: owner,
-    //         to: fireWall.address,
-    //         value: toNano(0.5),
-    //         bounce:true,
-    //         body: new CommonMessageInfo({
-    //             body: new CellMessage(beginCell().storeUint(UPGRADE, 32).storeUint(1, 64).storeRef(codeCell[0]).endCell())
-    //         })
-    //     })
-    //     let res = await fireWall.sendInternalMessage(message);
-	//
-	// 	console.log(res);
-    //     expect(res.actionList.length).eq(2);
-    //     expect(res.exit_code).eq(0);
-    // });
 
 });

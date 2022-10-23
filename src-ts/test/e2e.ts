@@ -1,14 +1,13 @@
-import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "./helpers";
-import { SingleNominatorContract } from "../contract-ts/single-nominator-contract";
+import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "../helpers";
+import { SingleNominator } from "../contracts-ts/single-nominator";
 
 import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell } from "ton";
 
-import {waitForSeqno, compileFuncToB64} from "./helpers";
+import {waitForSeqno, compileFuncToB64} from "../helpers";
 import { expect } from "chai";
 import {Buffer} from "buffer";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
-const config = Address.parse("Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn");
 
 const client = new TonClient({ endpoint: "https://testnet.toncenter.com/api/v2/jsonRPC", apiKey: "0b9c288987a40a10ac53c277fe276fd350d217d0a97858a093c796a5b09f39f6"});
 // const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://sandbox.tonhubapi.com/jsonRPC"});
@@ -22,7 +21,6 @@ const RECOVER_STAKE = 0x47657424;
 
 const SEND_RAW_MSG = 0x1000;
 const UPGRADE = 0x1001;
-const AFTER_UPGRADE = 0x1002;
 const CHANGE_VALIDATOR_ADDRESS = 0x1003;
 const WITHDRAW = 0x1004;
 
@@ -47,7 +45,7 @@ async function deployFirewall(
   privateKey: Buffer
 ) {
 
-  const contract = await SingleNominatorContract.create({owner, validator});
+  const contract = await SingleNominator.create({owner, validator});
 
   if (await client.isContractDeployed(contract.address)) {
     console.log(`contract: ${contract.address.toFriendly()} already Deployed`);
@@ -81,7 +79,7 @@ async function transferFunds(
   client: TonClient,
   walletContract: WalletContract,
   privateKey: Buffer,
-  contract: SingleNominatorContract | WalletContract,
+  contract: SingleNominator | WalletContract,
   amount = FIREWALL_MIN_TON * 2
 ) {
 
@@ -106,7 +104,7 @@ async function sendTxToFirewall(
   client: TonClient,
   walletContract: WalletContract,
   walletPrivateKey: Buffer,
-  firewallContract: SingleNominatorContract,
+  firewallContract: SingleNominator,
   bounce: boolean,
   either: boolean = false,
   opcode: number | null = -1,
@@ -149,7 +147,7 @@ describe("e2e test suite", () => {
   let newOwnerBalance: number;
   let newBalance: number;
   let res: any;
-  let firewallContract: SingleNominatorContract;
+  let firewallContract: SingleNominator;
   let deployWallet: WalletContract;
   let owner: WalletContract;
   let validator: WalletContract;

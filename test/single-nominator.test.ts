@@ -103,8 +103,9 @@ describe("single nominator test suite", () => {
         expect(res.type).eq('failed');
     });
 
-    it("send elector NEW_STAKE opcode should pass ", async () => {
+    it("send elector NEW_STAKE opcode with low nominator balance should fail", async () => {
 
+        nominator = await SingleNominatorMock.Create(toNano(1), owner, validator_masterchain);
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,
@@ -125,19 +126,35 @@ describe("single nominator test suite", () => {
         })
         let res = await nominator.sendInternalMessage(message);
 
-        expect(res.actionList.length).eq(1);
-        expect(res.exit_code).eq(0);
-        expect(res.type).eq('success');
+        expect(res.actionList.length).eq(0);
+        expect(res.exit_code).eq(INSUFFICIENT_BALANCE);
+        expect(res.type).eq('failed');
     });
 
-    it.only("send elector RECOVER_STAKE opcode", async () => {
-
-        nominator = await SingleNominatorMock.Create(toNano(1), owner, validator_masterchain);
+    it("send elector RECOVER_STAKE without query_id should fail", async () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
+            bounce:true,
+            body: new CommonMessageInfo({
+                body: new CellMessage(beginCell().storeUint(RECOVER_STAKE, 32).endCell())
+            })
+        })
+        let res = await nominator.sendInternalMessage(message);
+
+        expect(res.actionList.length).eq(0);
+        expect(res.exit_code).eq(0);
+        expect(res.type).eq('failed');
+    });
+
+    it("send elector RECOVER_STAKE opcode", async () => {
+
+        const message = new InternalMessage({
+            from: validator_masterchain,
+            to: nominator.address,
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(RECOVER_STAKE, 32).storeUint(1, 64).endCell())
@@ -150,14 +167,14 @@ describe("single nominator test suite", () => {
         expect(res.type).eq('success');
     });
 
-    it("send elector NEW_STAKE opcode with validator on basechain should pass", async () => {
+    it("send elector NEW_STAKE opcode with validator on basechain should fail", async () => {
 
         let nominator = await SingleNominatorMock.Create(toNano(10), owner, validator_basechain, -1);
 
         const message = new InternalMessage({
             from: validator_basechain,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).storeCoins(toNano(1)).storeUint(1, 8).endCell())
@@ -165,9 +182,9 @@ describe("single nominator test suite", () => {
         })
         let res = await nominator.sendInternalMessage(message);
 
-        expect(res.actionList.length).eq(1);
-        expect(res.exit_code).eq(0);
-        expect(res.type).eq('success');
+        expect(res.actionList.length).eq(0);
+        expect(res.exit_code).eq(WRONG_VALIDIATOR_WC);
+        expect(res.type).eq('failed');
     });
 
     it("send elector NEW_STAKE opcode with nominator on basechain should fail", async () => {
@@ -177,7 +194,7 @@ describe("single nominator test suite", () => {
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).endCell())
@@ -195,7 +212,7 @@ describe("single nominator test suite", () => {
         const message = new InternalMessage({
             from: validator_masterchain,
             to: nominator.address,
-            value: toNano(1.1),
+            value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
                 body: new CellMessage(beginCell().storeUint(0x50, 32).storeUint(1, 64).endCell())
@@ -203,12 +220,12 @@ describe("single nominator test suite", () => {
         })
         let res = await nominator.sendInternalMessage(message);
 
-        expect(res.type).eq('failed');
+        expect(res.type).eq('success');
         expect(res.actionList.length).eq(0);
-        expect(res.exit_code).eq(WRONG_SET_CODE);
+        expect(res.exit_code).eq(0);
     });
 
- 	it("send elector wrong query_id", async () => {
+ 	it("send elector query_id=0 should fail", async () => {
 
         const message = new InternalMessage({
             from: validator_masterchain,
@@ -283,7 +300,7 @@ describe("single nominator test suite", () => {
     it("owner send raw message", async () => {
 
 		const fwd_message = new InternalMessage({
-            from: owner,
+            from: nominator.address,
             to: elector,
             value: toNano(0.5),
             bounce:true,

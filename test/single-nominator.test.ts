@@ -177,7 +177,16 @@ describe("single nominator test suite", () => {
             value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
-                body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).storeCoins(toNano(1)).storeUint(1, 8).endCell())
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(10)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
             })
         })
         let res = await nominator.sendInternalMessage(message);
@@ -197,7 +206,16 @@ describe("single nominator test suite", () => {
             value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
-                body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64).endCell())
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(10)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
             })
         })
         let res = await nominator.sendInternalMessage(message);
@@ -215,7 +233,16 @@ describe("single nominator test suite", () => {
             value: toNano(1.234),
             bounce:true,
             body: new CommonMessageInfo({
-                body: new CellMessage(beginCell().storeUint(0x50, 32).storeUint(1, 64).endCell())
+                body: new CellMessage(beginCell()
+					.storeUint(0x50, 32) // opcode
+					.storeUint(1, 64) // query_id
+					.storeCoins(toNano(10)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
             })
         })
         let res = await nominator.sendInternalMessage(message);
@@ -233,7 +260,16 @@ describe("single nominator test suite", () => {
             value: toNano(1),
             bounce:true,
             body: new CommonMessageInfo({
-                body: new CellMessage(beginCell().storeUint(NEW_STAKE, 32).storeUint(0, 64).endCell())
+                body: new CellMessage(beginCell()
+					.storeUint(NEW_STAKE, 32) // opcode
+					.storeUint(0, 64) // query_id
+					.storeCoins(toNano(10)) // coins
+					.storeUint(0, 256) // validator_pubkey
+					.storeUint(0, 32) // stake_at
+					.storeUint(0, 32) // max_factor
+					.storeUint(0, 256) // adnl_addr
+					.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+					.endCell())
             })
         })
         let res = await nominator.sendInternalMessage(message);

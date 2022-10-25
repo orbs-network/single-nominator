@@ -162,47 +162,6 @@ async function transferFunds(
 }
 
 async function sendTxToNominator(
-  client: TonClient,
-  walletContract: WalletContract,
-  walletPrivateKey: Buffer,
-  nominatorContract: SingleNominator,
-  bounce: boolean,
-  either: boolean = false,
-  opcode: number | null = -1,
-  value: number = 0,
-  mode = 0,
-  query_id: number = 1,
-  payload: any = null
-) {
-  let seqno = await walletContract.getSeqNo();
-  console.log(`send message to nominator with payload: ${buildMessage(opcode, query_id, either, value).toString()}`);
-
-  const transfer = await walletContract.createTransfer({
-    secretKey: walletPrivateKey,
-    seqno: seqno,
-    sendMode: mode,
-    order: new InternalMessage({
-      to: nominatorContract.address,
-      value: toNano(.5),
-      bounce,
-      body: new CommonMessageInfo({
-        body: new CellMessage(payload ? payload: buildMessage(opcode, query_id, either, value)),
-      }),
-    }),
-  });
-
-  try {
-    await client.sendExternalMessage(walletContract, transfer);
-  } catch (e) {
-    return false;
-  }
-
-  console.log(`- transaction sent successfully to nominator at -> ${nominatorContract.address.toFriendly()} [wallet seqno:${seqno}]`);
-  await sleep(BLOCK_TIME);
-  return true;
-}
-
-async function _sendTxToNominator(
   validatorWallet: WalletContract,
   validatorPrivateKey: Buffer,
   nominatorAddress: Address,
@@ -304,7 +263,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with small msg_value should fail (INSUFFICIENT_ELECTOR_FEE)", async () => {
     payload = partialNewStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, 0.1, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, 0.1, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -315,7 +274,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with query_id=0 should fail (WRONG_QUERY_ID)", async () => {
     payload = partialNewStakeMsg(0);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -326,7 +285,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with partial message should fail (cell underflow)", async () => {
     payload = partialNewStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -337,7 +296,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with full message should be bounced from elector", async () => {
     payload = newStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -350,7 +309,7 @@ describe("e2e test suite", () => {
 
   it("send RECOVER_STAKE from elector (no stake at elector only msg value should be returned)", async () => {
     payload = recoverStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -363,7 +322,7 @@ describe("e2e test suite", () => {
 
   it("send RECOVER_STAKE with partial payload should fail (cell underflow)", async () => {
     payload = beginCell().storeUint(RECOVER_STAKE, 32).endCell();
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -376,7 +335,7 @@ describe("e2e test suite", () => {
   it("send WITHDRAW from owner", async () => {
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(balance.toFixed(2))).endCell();
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
@@ -394,7 +353,7 @@ describe("e2e test suite", () => {
   it("send WITHDRAW from validator should fail", async () => {
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(balance.toFixed(2))).endCell();
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     expect(newBalance).closeTo(balance + SEND_MSG_VALUE, 0.2);
@@ -407,7 +366,7 @@ describe("e2e test suite", () => {
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(otherWalletContract.address).endCell();
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
@@ -416,7 +375,7 @@ describe("e2e test suite", () => {
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(validator.address).endCell();
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let new_validator_addr = bytesToAddress(res.stack[1][1].bytes);
@@ -430,7 +389,7 @@ describe("e2e test suite", () => {
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(otherWalletContract.address).endCell();
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let validator_addr_after_change = bytesToAddress(res.stack[1][1].bytes);
@@ -454,7 +413,7 @@ describe("e2e test suite", () => {
 		.endCell())
   	.endCell();
 
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -479,7 +438,7 @@ describe("e2e test suite", () => {
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
 
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.callGetMethod(nominatorContract.address, 'magic');
@@ -491,7 +450,7 @@ describe("e2e test suite", () => {
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
 
-    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');

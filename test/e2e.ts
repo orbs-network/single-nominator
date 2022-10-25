@@ -26,14 +26,16 @@ const UPGRADE = 0x9903;
 const WRONG_NOMINATOR_WC = 0x2000;
 const WRONG_QUERY_ID = 0x2001;
 const WRONG_SET_CODE = 0x2002;
-const WRONG_VALIDIATOR_WC = 0x2003;
+const WRONG_VALIDATOR_WC = 0x2003;
 const INSUFFICIENT_BALANCE = 0x2004;
 const INSUFFICIENT_ELECTOR_FEE = 0x2005;
 
 const CELL_UNDERFLOW = 9;
 
 const STAKE_AMOUNT = 1.2345;
-const VALIDATOR_MSG_VALUE = 1.0
+const SEND_MSG_VALUE = 1.0;
+
+const MIN_TON_FOR_STORAGE = 1;
 
 function buildMessage(op: number | null, query_id: number, eitherBit = false, amount = 0) {
   if (op == null) return beginCell().endCell();
@@ -313,7 +315,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with query_id=0 should fail (WRONG_QUERY_ID)", async () => {
     payload = partialNewStakeMsg(0);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, VALIDATOR_MSG_VALUE, payload);
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -324,7 +326,7 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with partial message should fail (cell underflow)", async () => {
     payload = partialNewStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, VALIDATOR_MSG_VALUE, payload);
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
@@ -335,84 +337,67 @@ describe("e2e test suite", () => {
 
   it("send NEW_STAKE with full message should be bounced from elector", async () => {
     payload = newStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, VALIDATOR_MSG_VALUE, payload);
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
-	res = await client.getTransactions(nominatorContract.address, {limit: 2});
+	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
   	expect(res.inMessage.info.bounced).to.eq(true);
   	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
-  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + VALIDATOR_MSG_VALUE, 0.3);
+  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
-  it.only("send RECOVER_STAKE with full message should be bounced from elector", async () => {
+  it("send RECOVER_STAKE from elector (no stake at elector only msg value should be returned)", async () => {
     payload = recoverStakeMsg(1);
-    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, VALIDATOR_MSG_VALUE, payload);
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
-	res = await client.getTransactions(nominatorContract.address, {limit: 2});
+	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.bounced).to.eq(true);
+  	expect(res.inMessage.info.bounced).to.eq(false);
   	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
-  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + VALIDATOR_MSG_VALUE, 0.3);
+  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(SEND_MSG_VALUE, 0.2);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
-  it("send RECOVER_STAKE", async () => {
-  	lastTxs = await client.getTransactions(nominatorContract.address, {limit: 5});
-    res = await sendTxToNominator(client, validator, validatorWalletKey.secretKey, nominatorContract, true, false, RECOVER_STAKE, 0, 0);
-    expect(res).to.eq(true);
+  it("send RECOVER_STAKE with partial payload should fail (cell underflow)", async () => {
+    payload = beginCell().storeUint(RECOVER_STAKE, 32).endCell();
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
-    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance > balance).to.eq(true);
-  	res = await client.getTransactions(nominatorContract.address, {limit: 5});
-    expect(res[2].inMessage.createdLt == lastTxs[0].inMessage.createdLt).to.eq(true);
-    expect(res[0].outMessages.length).to.eq(0);
-    expect(res[1].outMessages.length).to.eq(1);
-  });
 
-  it("send wrong opcode", async () => {
-  	lastTxs = await client.getTransactions(nominatorContract.address, {limit: 5});
-    await sendTxToNominator(client, validator, validatorWalletKey.secretKey, nominatorContract, true, false, 0xBEEF, 0, 0);
-    await sleep(BLOCK_TIME);
-  	res = await client.getTransactions(nominatorContract.address, {limit: 5});
-    expect(res[1].createdLt).to.eq(lastTxs[0].createdLt);
-    // TODO: improve expect
+	res = await client.getTransactions(nominatorContract.address, {limit: 1});
+    res = parseTxDetails(res[0]);
+  	console.log(res);
+  	expect(res.description.computePhase.exitCode).to.eq(CELL_UNDERFLOW);
+    expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
   it("send WITHDRAW from owner", async () => {
-    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber())) - 0.5;
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, WITHDRAW, balance, 0);
-    expect(res).to.eq(true);
+    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
+    payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(balance.toFixed(2))).endCell();
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
+
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).closeTo(0.5, 0.25);
+    expect(newBalance).closeTo(MIN_TON_FOR_STORAGE, 0);
   });
 
   it("send coins to nominator", async () => {
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     await transferFunds(client, deployWallet, deployWalletKey.secretKey, nominatorContract, NOMINATOR_MIN_TON * 2);
+    await sleep(BLOCK_TIME);
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).to.closeTo(balance + NOMINATOR_MIN_TON * 2, 0.5);
+    expect(newBalance).to.closeTo(balance + NOMINATOR_MIN_TON * 2, 0.2);
   });
 
   it("send WITHDRAW from validator should fail", async () => {
-    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber())) - 0.5;
-    res = await sendTxToNominator(client, validator, validatorWalletKey.secretKey, nominatorContract, true, false, WITHDRAW, balance, 0);
-    expect(res).to.eq(true);
+    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
+    payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(balance.toFixed(2))).endCell();
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).closeTo(balance + 0.5, 0.75);
-  });
-
-  it("send WITHDRAW from other account should fail", async () => {
-    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber())) - 0.5;
-    res = await sendTxToNominator(client, otherWalletContract, otherWalletKey.secretKey, nominatorContract, true, false, WITHDRAW, balance, 0);
-    expect(res).to.eq(true);
-    await sleep(BLOCK_TIME);
-    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).closeTo(balance + 0.5, 0.75);
+    expect(newBalance).closeTo(balance + SEND_MSG_VALUE, 0.2);
   });
 
   it("change validator from owner", async () => {
@@ -422,17 +407,16 @@ describe("e2e test suite", () => {
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(otherWalletContract.address).endCell();
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, CHANGE_VALIDATOR_ADDRESS, balance, 0, 1, payload);
-    expect(res).to.eq(true);
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
+
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let validator_addr_after_change = bytesToAddress(res.stack[1][1].bytes);
     expect(validator_addr_after_change.toFriendly()).to.eq(otherWalletContract.address.toFriendly());
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(validator.address).endCell();
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, CHANGE_VALIDATOR_ADDRESS, balance, 0, 1, payload);
-    expect(res).to.eq(true);
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let new_validator_addr = bytesToAddress(res.stack[1][1].bytes);
@@ -446,56 +430,39 @@ describe("e2e test suite", () => {
 
   	payload = beginCell().storeUint(CHANGE_VALIDATOR_ADDRESS, 32)
   	.storeUint(1, 64).storeAddress(otherWalletContract.address).endCell();
-    res = await sendTxToNominator(client, validator, validatorWalletKey.secretKey, nominatorContract, true, false, CHANGE_VALIDATOR_ADDRESS, balance, 0, 1, payload);
-    expect(res).to.eq(true);
+    res = await _sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let validator_addr_after_change = bytesToAddress(res.stack[1][1].bytes);
     expect(validator_addr_after_change.toFriendly()).to.eq(validator.address.toFriendly());
   });
 
-  it("send NEW_STAKE with mode 128 using SEND_RAW_MSG from owner", async () => {
-
-  	lastTxs = await client.getTransactions(nominatorContract.address, {limit: 5});
-
-    balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-
-	let mode = 128;
+  it("send NEW_STAKE from owner using SEND_RAW_MSG", async () => {
+	let mode = 64;
   	payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64)
   	.storeUint(mode, 8).storeRef(
-		beginCell().storeUint(0x18, 6).storeAddress(elector).storeCoins(0)
-		.storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-		.storeUint(NEW_STAKE, 32).storeUint(1, 64).endCell()
-  	)
+		beginCell()
+			.storeUint(0x18, 6).storeAddress(elector).storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
+			.storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+			.storeRef(
+				beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64)
+				.storeUint(0, 256) // validator_pubkey
+				.storeUint(0, 32) // stake_at
+				.storeUint(0, 32) // max_factor
+				.storeUint(0, 256) // adnl_addr
+			.endCell())
+		.endCell())
   	.endCell();
 
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, SEND_RAW_MSG, balance, 0, 1, payload);
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
-  	res = await client.getTransactions(nominatorContract.address, {limit: 5});
-
-    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).closeTo(balance, 1);
-	expect(res[2].createdLt).to.eq(lastTxs[0].createdLt);
-	expect(Number(fromNano(res[0].inMessage.value))).to.closeTo(balance, 1);
-  });
-
-  it("send WITHDRAW with mode 128 using SEND_RAW_MSG from owner", async () => {
-
-	let mode = 128;
-  	payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64)
-  	.storeUint(mode, 8).storeRef(
-		beginCell().storeUint(0x18, 6).storeAddress(owner.address).storeCoins(0)
-		.storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-		.storeUint(0x101, 32).storeUint(1, 64).endCell()
-  	)
-  	.endCell();
-
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, SEND_RAW_MSG, 0, 0, 1, payload);
-    await sleep(BLOCK_TIME);
-
-    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
-    expect(newBalance).eq(0);
+	res = await client.getTransactions(nominatorContract.address, {limit: 1});
+    res = parseTxDetails(res[0]);
+  	expect(res.inMessage.info.bounced).to.eq(true);
+  	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
+  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
+    expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
   it("send upgrade from owner", async () => {
@@ -506,14 +473,14 @@ describe("e2e test suite", () => {
 
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
 
-	let codeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/test-upgrade.fc"]);
+	let codeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "test/contracts/test-upgrade.fc"]);
 	let code = Cell.fromBoc(codeB64);
 
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
 
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, SEND_RAW_MSG, balance, 0, 1, payload);
-    await sleep(3 * BLOCK_TIME);
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    await sleep(BLOCK_TIME);
 
 	res = await client.callGetMethod(nominatorContract.address, 'magic');
     expect(res.stack[0][1]).to.eq('0xcafe');
@@ -524,12 +491,15 @@ describe("e2e test suite", () => {
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
 
-    res = await sendTxToNominator(client, owner, deployWalletKey.secretKey, nominatorContract, true, false, SEND_RAW_MSG, balance, 0, 1, payload);
-    await sleep(3 * BLOCK_TIME);
+    res = await _sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
+    await sleep(BLOCK_TIME);
 
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     expected_owner = bytesToAddress(res.stack[0][1].bytes);
     expect(expected_owner.toFriendly()).to.eq(owner.address.toFriendly());
+
+    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
+    expect(newBalance).closeTo(balance + 2 * SEND_MSG_VALUE, 0.35);
   });
 
 });

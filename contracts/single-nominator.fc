@@ -26,7 +26,7 @@ const MODE::SEND_MODE_REMAINING_AMOUNT = 64;
 const ERROR::WRONG_NOMINATOR_WC = 0x2000;
 const ERROR::WRONG_QUERY_ID = 0x2001;
 const ERROR::WRONG_SET_CODE = 0x2002;
-const ERROR::WRONG_VALIDIATOR_WC = 0x2003;
+const ERROR::WRONG_VALIDATOR_WC = 0x2003;
 const ERROR::INSUFFICIENT_BALANCE = 0x2004;
 const ERROR::INSUFFICIENT_ELECTOR_FEE = 0x2005;
 
@@ -115,7 +115,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
         if (op == OP::NEW_STAKE) {
             (int sender_wc, _) = parse_std_addr(sender);
             (int my_wc, _) = parse_std_addr(my_address());
-            throw_unless(ERROR::WRONG_VALIDIATOR_WC, sender_wc == -1); ;; for voting purpose
+            throw_unless(ERROR::WRONG_VALIDATOR_WC, sender_wc == -1); ;; for voting purpose
             throw_unless(ERROR::WRONG_NOMINATOR_WC, my_wc == -1); ;; must be deployed on masterchain
             throw_unless(ERROR::WRONG_QUERY_ID, query_id); ;; query_id must be greater then 0 to receive confirmation message from elector
             throw_unless(ERROR::INSUFFICIENT_ELECTOR_FEE, msg_value >= ONE_TON); ;; must be greater then new_stake sending to elector fee

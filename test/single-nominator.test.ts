@@ -22,7 +22,7 @@ const UPGRADE = 0x9903;
 const WRONG_NOMINATOR_WC = 0x2000;
 const WRONG_QUERY_ID = 0x2001;
 const WRONG_SET_CODE = 0x2002;
-const WRONG_VALIDIATOR_WC = 0x2003;
+const WRONG_VALIDATOR_WC = 0x2003;
 const INSUFFICIENT_BALANCE = 0x2004;
 const INSUFFICIENT_ELECTOR_FEE = 0x2005;
 
@@ -192,7 +192,7 @@ describe("single nominator test suite", () => {
         let res = await nominator.sendInternalMessage(message);
 
         expect(res.actionList.length).eq(0);
-        expect(res.exit_code).eq(WRONG_VALIDIATOR_WC);
+        expect(res.exit_code).eq(WRONG_VALIDATOR_WC);
         expect(res.type).eq('failed');
     });
 

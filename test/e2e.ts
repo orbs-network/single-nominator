@@ -33,7 +33,7 @@ const INSUFFICIENT_ELECTOR_FEE = 0x2005;
 const CELL_UNDERFLOW = 9;
 
 const STAKE_AMOUNT = 1.2345;
-const SEND_MSG_VALUE = 1.0;
+const SEND_MSG_VALUE = 1.3;
 
 const MIN_TON_FOR_STORAGE = 1;
 
@@ -292,14 +292,13 @@ describe("e2e test suite", () => {
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
-  it("send NEW_STAKE with full message should be bounced from elector", async () => {
+  it("send NEW_STAKE with full message to elector, stake should be returned ", async () => {
     payload = newStakeMsg(1);
     res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.bounced).to.eq(true);
   	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
   	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
     expect(res.time).closeTo(Date.now() / 1000, 30);
@@ -394,7 +393,7 @@ describe("e2e test suite", () => {
     expect(validator_addr_after_change.toFriendly()).to.eq(validator.address.toFriendly());
   });
 
-  it("send NEW_STAKE from owner using SEND_RAW_MSG", async () => {
+  it("send NEW_STAKE from owner using SEND_RAW_MSG, stake should be returned", async () => {
 	let mode = 64;
   	payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64)
   	.storeUint(mode, 8).storeRef(
@@ -416,7 +415,6 @@ describe("e2e test suite", () => {
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.bounced).to.eq(true);
   	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
   	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
     expect(res.time).closeTo(Date.now() / 1000, 30);

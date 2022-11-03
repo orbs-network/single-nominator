@@ -14,8 +14,8 @@ false =: force-bounce
 
 $1 bounce parse-load-address force-bounce or allow-bounce and =: bounce 2=: to_addr
 
-<b 4099 32 u, 1 64 u, to_addr addr, b> =: body_boc
+<b 4097 32 u, 1 64 u, to_addr Addr, b> =: body_boc
 body_boc <s csr.
 body_boc 2 boc+>B
-"set-validator.boc" tuck B>file
+"change-validator.boc" tuck B>file
 ."(Saved query to file " type .")" cr

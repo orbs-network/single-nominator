@@ -8,6 +8,7 @@
     "prettier": "npx prettier --write '{test,contracts,build}/**/*.{ts,js,json}'",
     "e2e": "mocha --timeout 120000 --exit test/e2e.ts",
     "test": "mocha --timeout 45000 --exit test/*.test.ts",
+    "deploy": "ts-node deploy/deploy.ts",
     "build:hex": "ts-node src/build-hex.ts"
   },
   "devDependencies": {

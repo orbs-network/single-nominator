@@ -214,8 +214,8 @@ describe("e2e test suite", () => {
 
   before(async () => {
     deployWalletKey = await initDeployKey("");
-    res = await initWallet(client, deployWalletKey.publicKey);
-    owner = deployWallet = res.wallet;
+    deployWallet = await initWallet(client, deployWalletKey.publicKey);
+    owner = deployWallet;
 
     console.log(`deployer contract address: ${deployWallet.address.toFriendly()}`);
     console.log(`https://tonsandbox.com/explorer/address/${deployWallet.address.toFriendly()}`);
@@ -226,14 +226,12 @@ describe("e2e test suite", () => {
     }
 
     validatorWalletKey = await initDeployKey(VALIDATOR_INDEX.toString());
-    res = await initWallet(client, validatorWalletKey.publicKey, -1);
-    validator = res.wallet;
+    validator = await initWallet(client, validatorWalletKey.publicKey, -1);
     console.log(`validator contract address: ${validator.address.toFriendly()}`);
     console.log(`https://tonsandbox.com/explorer/address/${validator.address.toFriendly()}`);
 
     otherWalletKey = await initDeployKey("-1");
-    res = await initWallet(client, otherWalletKey.publicKey, -1);
-    otherWalletContract = res.wallet;
+    otherWalletContract = await initWallet(client, otherWalletKey.publicKey, -1);
     console.log(`other wallet contract address: ${otherWalletContract.address.toFriendly()}`);
     console.log(`https://tonsandbox.com/explorer/address/${otherWalletContract.address.toFriendly()}`);
 

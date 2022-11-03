@@ -6,7 +6,7 @@
 
 const BOUNCEABLE = 0x18;
 const ADDRESS_SIZE = 256;
-const ONE_TON = 1000000000;
+const ONE_TON = 1200000000;
 const MIN_TON_FOR_STORAGE = ONE_TON; ;; 10% from nominator-pool since we have a single cell
 
 ;; owner ops

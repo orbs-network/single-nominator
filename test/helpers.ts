@@ -50,7 +50,7 @@ export async function initWallet(client: TonClient, publicKey: Buffer, workchain
 `
   );
 
-  return { wallet, walletBalance };
+  return wallet;
 }
 
 export async function initDeployKey(index = '') {

@@ -6,8 +6,8 @@
 
 const BOUNCEABLE = 0x18;
 const ADDRESS_SIZE = 256;
-const ONE_TON = 1200000000;
-const MIN_TON_FOR_STORAGE = ONE_TON; ;; 10% from nominator-pool since we have a single cell
+const MIN_TON_FOR_STORAGE = 1000000000; ;; 10% from nominator-pool since we have a single cell
+const MIN_TON_FOR_SEND_MSG = 1200000000;
 
 ;; owner ops
 const OP::WITHDRAW = 0x1000;
@@ -118,7 +118,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
             throw_unless(ERROR::WRONG_VALIDATOR_WC, sender_wc == -1); ;; for voting purpose
             throw_unless(ERROR::WRONG_NOMINATOR_WC, my_wc == -1); ;; must be deployed on masterchain
             throw_unless(ERROR::WRONG_QUERY_ID, query_id); ;; query_id must be greater then 0 to receive confirmation message from elector
-            throw_unless(ERROR::INSUFFICIENT_ELECTOR_FEE, msg_value >= ONE_TON); ;; must be greater then new_stake sending to elector fee
+            throw_unless(ERROR::INSUFFICIENT_ELECTOR_FEE, msg_value >= MIN_TON_FOR_SEND_MSG); ;; must be greater then new_stake sending to elector fee
             int stake_amount = in_msg_body~load_coins();
             slice msg = in_msg_body;
             check_new_stake_msg(in_msg_body);

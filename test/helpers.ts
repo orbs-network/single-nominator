@@ -81,7 +81,7 @@ export async function initDeployKey(index = '') {
 }
 
 export function compileFuncToB64(funcFiles: string[]): string {
-    const funcPath = process.env.FUNC_PATH || "func";
+    const funcPath = process.env.FUNC_PATH || "/usr/local/bin/func";
     try {
         execSync(`${funcPath} -o build/tmp.fif  -SPA ${funcFiles.join(" ")}`);
     } catch (e: any) {

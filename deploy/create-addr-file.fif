@@ -1,0 +1,8 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"GetOpt.fif" include
+
+true constant bounce
+
+$1 bounce parse-load-address
+rot rot .s "single-nominator.addr"  save-address-verbose

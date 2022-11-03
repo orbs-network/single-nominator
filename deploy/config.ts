@@ -2,10 +2,9 @@ import {TonClient, Address} from "ton";
 
 export const config = {
 
-	owner: Address.parse('EQD87ZfKcR52rfY_3VQZ-4SEG8YJAYLo7HEr3WwTzU8d2pb2'),
-	validator: Address.parse('Ef8fP5esY3kEqrANekDXP0WcwhG6Ig5ceqNmYBFt9fn16JDk')
+	owner: Address.parse('EQBJbS35Ec-efHt7bOxPl3Vitw7CXLUBU_CT0r0NnVnOtpGy'),
+	validator: Address.parse('Ef9SGIB3Pix1RxyAGR9jQa5sA4Ug5Ljw3QAJsdF7euE1EpFI')
 };
 
 
-export const client = new TonClient({ endpoint: "https://testnet.toncenter.com/api/v2/jsonRPC", apiKey: "0b9c288987a40a10ac53c277fe276fd350d217d0a97858a093c796a5b09f39f6"});
-// export const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://sandbox.tonhubapi.com/jsonRPC"});
+export const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://toncenter.com/api/v2/jsonRPC", apiKey: "3ebe42d62396ff96725e0de9e71cae2916c1b690d3ffc8a80ecd9af4e8fef6f2"});

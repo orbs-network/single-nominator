@@ -4,7 +4,7 @@ import { CommonMessageInfo, InternalMessage, toNano, StateInit} from "ton";
 import {config, client} from "./config";
 
 const BLOCK_TIME = 10000;
-const NOMINATOR_MIN_TON = 3;
+const NOMINATOR_MIN_TON = 6;
 
 
 async function deploy() {
@@ -26,7 +26,7 @@ async function deploy() {
 	sendMode: 1 + 2,
 	order: new InternalMessage({
 	  to: contract.address,
-	  value: toNano(NOMINATOR_MIN_TON * 2),
+	  value: toNano(NOMINATOR_MIN_TON),
 	  bounce: false,
 	  body: new CommonMessageInfo({
 		stateInit: new StateInit({ data: contract.source.initialData, code: contract.source.initialCode }),

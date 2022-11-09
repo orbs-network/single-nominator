@@ -34,5 +34,6 @@ function generateChangeValidatorDeeplink(singleNominatorAddr: string, newValidat
     console.log(`change validator: ${deepLink}`);
 }
 
+// params: nominator-addr, new-validator-addr
 generateWithdrawDeeplink(process.argv[2]);
 generateChangeValidatorDeeplink(process.argv[2], process.argv[3] || ZERO_ADDR);

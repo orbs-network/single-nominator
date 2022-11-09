@@ -4,3 +4,5 @@ node_modules
 bin
 *.boc
 deploy.config.json
+*.boc
+*.addr

@@ -1,7 +1,6 @@
 import {TonClient, Address} from "ton";
 
 export const config = {
-
 	owner: Address.parse('EQBJbS35Ec-efHt7bOxPl3Vitw7CXLUBU_CT0r0NnVnOtpGy'),
 	validator: Address.parse('Ef9SGIB3Pix1RxyAGR9jQa5sA4Ug5Ljw3QAJsdF7euE1EpFI')
 };

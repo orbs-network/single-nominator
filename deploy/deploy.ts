@@ -3,8 +3,7 @@ import { SingleNominator } from "../contracts-ts/single-nominator";
 import { CommonMessageInfo, InternalMessage, toNano, StateInit} from "ton";
 import {config, client} from "./config";
 
-const BLOCK_TIME = 10000;
-const NOMINATOR_MIN_TON = 6;
+const NOMINATOR_MIN_TON = 2;
 
 
 async function deploy() {
@@ -29,7 +28,7 @@ async function deploy() {
 	  value: toNano(NOMINATOR_MIN_TON),
 	  bounce: false,
 	  body: new CommonMessageInfo({
-		stateInit: new StateInit({ data: contract.source.initialData, code: contract.source.initialCode }),
+		stateInit: new StateInit({data: contract.source.initialData, code: contract.source.initialCode}),
 		body: null,
 	  }),
 	}),
@@ -38,7 +37,7 @@ async function deploy() {
 	await client.sendExternalMessage(deployWallet, transfer);
 	await waitForContractToBeDeployed(client, contract.address);
 	console.log(`- Deploy transaction sent successfully to -> ${contract.address.toFriendly()} [seqno:${seqno}]`);
-	await sleep(BLOCK_TIME);
+	await sleep(10000);
 	return contract;
 }
 

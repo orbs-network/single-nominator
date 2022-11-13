@@ -8,8 +8,7 @@ import {Buffer} from "buffer";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 
-// const client = new TonClient({ endpoint: "https://testnet.toncenter.com/api/v2/jsonRPC", apiKey: "0b9c288987a40a10ac53c277fe276fd350d217d0a97858a093c796a5b09f39f6"});
-const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://sandbox.tonhubapi.com/jsonRPC"});
+const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://testnet.toncenter.com/api/v2/jsonRPC", apiKey: process.env.TON_API_KEY}, );
 const BLOCK_TIME = 10000;
 const NOMINATOR_MIN_TON = 3;
 const DEPLOYER_MIN_TON = 6;

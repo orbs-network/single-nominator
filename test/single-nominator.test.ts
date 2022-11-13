@@ -1,5 +1,5 @@
 import {KeyPair} from "ton-crypto";
-import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, createWalletTransferV3, ExternalMessage, InternalMessage, toNano} from "ton";
+import {Address, beginCell, Cell, CellMessage, CommonMessageInfo, InternalMessage, toNano} from "ton";
 import {expect} from "chai";
 import {initDeployKey, compileFuncToB64} from "./helpers";
 import { SingleNominatorMock } from "../contracts-ts/single-nominator-mock";

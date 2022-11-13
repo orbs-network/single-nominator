@@ -192,3 +192,12 @@ The message body should include: opcode=0x7702 (32 bits), query_id (64 bits), mo
 This is an emergency opcode and probably should never not be used.<br/>
 It can be used to upgrade the nominator contract. <br/>
 The message body should include: opcode=0x9903 (32 bits), query_id (64 bits), reference to the new cell code. <br/>
+
+
+## Tests
+
+This repo includes a test folder with an e2e test (`e2e.ts`) which should be run on testnet. The client used in the e2e test is defined by the two env variables: TON_ENDPOINT and TON_API_KEY, make sure those variables are set to testnet. <br/>
+To run the e2e use: `npm run e2e`. It should deploy the nominator contract and run full e2e test. <br/>
+This folder also includes a unit test file (`single-nominator.test.ts`) which uses the evm-contract-executor. <br/>
+To run the unit test use: `npm run test.`
+ 

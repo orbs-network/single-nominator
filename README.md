@@ -129,8 +129,8 @@ In order to deploy the contract use the following procedure:
 * TON_ENDPOINT (default: `https://toncenter.com/api/v2/jsonRPC`)
 * TON_API_KEY <br/>
 Environment variables can be set by export or using .env file. For example: `export VALIDATOR_ADDRESS=Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU` or insert `VALIDATOR_ADDRESS=Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU` to .env file.
-2. run `npm run init-deploy-wallet` to init deploy wallet. The script will deploy a wallet (if not already deployed) and print its address. Make sure you have funds in this address which will be used for deployment. 1 TON should be enough for deployment.
-3. run `npm run deploy`. This script will deploy the single-nominator contract with the OWNER_ADDRESS and VALIDATOR_ADDRESS (if not already deployed) which were set as the environment variables.
+2. run `npm run init-deploy-wallet` to init deploy wallet. The script will deploy a wallet (if not already deployed) and print its address. Make sure you have funds in this address which will be used for deployment. 1 TON should be enough for deployment. The wallet mnemonics will be stored locally at ./build/deploy.config.json. This step should be run only once to init the deploy wallet.
+3. run `npm run deploy`. This script will deploy the single-nominator contract (if not already deployed) with the OWNER_ADDRESS and VALIDATOR_ADDRESS which were set as the environment variables.
 4. The deployment script will print the nominator contract address. Use str-to-addr.fif to create .addr file from the base64 string representation of the contract address. <br/>
 This file will be used by Mytonctrl and should be placed on the validator node at `~/.local/share/mytoncore/pools/` directory. Mytonctrl will search for pools in this folder (usePool should be set to true in Mytonctrl to use pools). <br/>
 Example: `fift -s scripts/fif/str-to-addr.fif Ef-C8SHoQ72S2fgqzhtUkzFG0krKKvIeCqpn4AjyXyhUUpIz`.
@@ -138,28 +138,29 @@ Example: `fift -s scripts/fif/str-to-addr.fif Ef-C8SHoQ72S2fgqzhtUkzFG0krKKvIeCq
 
 ## Mytonctrl settings
 
-Single nominator contract is compatible with Mytonctrl when set to usePool mode. The following steps should be taken:
+Single nominator contract is compatible with Mytonctrl when set in usePool mode. The following steps should be taken:
 1. Copy the nominator .addr file (generated as described above) to `~/.local/share/mytoncore/pools/`.
 2. From Mytonctrl use:
    * `set usePool true`
    * `set stake 350000` to set the stake to 350,000. Make sure to change the stake to the desired amount.
 3. Make sure you have a validator wallet whose address match the VALIDATOR_ADDRESS that used when deploying the contract. You can use `scripts/ts/read-contract-state.ts` to read the owner and validator addresses.
-4. Copy all fif script located in this repository under `mytonctrl-scripts/` directory. Mytonctrl will need all the scripts in order for the validator node to operate smoothly.
+4. Copy all fif script located in [mytonctrl-scripts](https://github.com/orbs-network/single-nominator/tree/main/mytonctrl-scripts) to the node under `~/.local/share/mytoncore/contracts/nominator-pool/func/`. Mytonctrl will need all the scripts in order for the validator node to operate smoothly.
 
 
 ## Owner only messages
 
-The nominator owner has 4 roles:
+The nominator owner has 4 roles.
+
 ### 1. withdraw
 Used to withdraw funds to the owner's wallet. To withdraw the funds the owner should send a message with a body that includes: opcode=0x1000 (32 bits), query_id (64 bits) and withdraw amount (stored as coin variable). The nominator contract will send the funds with BOUNCABLE flag and mode=64. <br/><br/>
-In case the owner is using a **hot wallet** (not recommended), the script located at scripts/ts/withdraw-deeplink.ts can be used to generate a deeplink to initiate withdraw from tonkeeper wallet. <br/>
-Run this script by: `ts-node scripts/ts/withdraw-deeplink.ts single-nominator-addr withdraw-amount` where:
+In case the owner is using a **hot wallet** (not recommended), [withdraw-deeplink.ts](https://github.com/orbs-network/single-nominator/blob/main/scripts/ts/withdraw-deeplink.ts) can be used to generate a deeplink to initiate a withdrawal from tonkeeper wallet. <br/>
+Command line: `ts-node scripts/ts/withdraw-deeplink.ts single-nominator-addr withdraw-amount` where:
 * single-nominator-addr is the single nominator address the owner wishes to withdraw from.
 * withdraw-amount is the amount to withdraw. The nominator contract will leave 1 TON in the contract so the actual amount that will be sent to the owner address will be the minimum between the requested amount and the contract balance - 1. <br/>
 The owner should run the deeplink from a phone with the tonkeeper wallet. <br/><br/>
 
-In case the owner is using a **cold wallet** (recommended), the script located at scripts/fif/withdraw.fif can be used to generate a boc body which includes withdraw opcode and the amount to withdraw. <br/>
-Run the fif script by: `fift -s scripts/fif/withdraw.fif withdraw-amount` where withdraw-amount is the amount to withdraw from the nominator contract to the owner's wallet. As described above the nominator contract will leave at least 1 TON in the contract. <br/>
+In case the owner is using a **cold wallet** (recommended), [withdraw.fif](https://github.com/orbs-network/single-nominator/blob/main/scripts/fif/withdraw.fif) can be used to generate a boc body which includes withdraw opcode and the amount to withdraw. <br/>
+Command line: `fift -s scripts/fif/withdraw.fif withdraw-amount` where withdraw-amount is the amount to withdraw from the nominator contract to the owner's wallet. As described above the nominator contract will leave at least 1 TON in the contract. <br/>
 This script will generate a boc body (named withdraw.boc) that should be signed and send from the owner's wallet. <br/>
 From the black computer the owner should run:
 * create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B withdraw.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The withdraw.boc is the boc generated above.
@@ -168,14 +169,14 @@ From the black computer the owner should run:
 ### 2. change-validator
 Used to change the validator address. The validator can only send NEW_STAKE and RECOVER_STAKE to the elector. In case the validator private key was compromised, the validator address can be changed. Notice that in this case the funds are safe as only the owner can withdraw the funds.<br/>
 
-In case the owner is using a **hot wallet**, the script located at scripts/ts/change-address-deeplink.ts can be used to generate a deeplink to change the validator address. <br/>
-Run this script by: `ts-node scripts/ts/change-address-deeplink.ts single-nominator-addr new-validator-address` where:
+In case the owner is using a **hot wallet** (not recommended), [change-validator-deeplink.ts](https://github.com/orbs-network/single-nominator/blob/main/scripts/ts/change-validator-deeplink.ts) can be used to generate a deeplink to change the validator address. <br/>
+Command line: `ts-node scripts/ts/change-validator-deeplink.ts single-nominator-addr new-validator-address` where:
 * single-nominator-addr is the single nominator address.
 * new-validator-address (defaults to ZERO address) is the address of the new validator. If you want to immediately disable the validator and only later set a new validator it might be convenient to set the validator address to the ZERO address.
-The owner should run the deeplink from a phone with the tonkeeper wallet. <br/><br/>
+The owner should run the deeplink from a phone with tonkeeper wallet. <br/><br/>
 
-In case the owner is using a **cold wallet**, the script located at scripts/fif/change-validator.fif can be used to generate a boc body which includes change-validator opcode and the new validator address. <br/>
-Run the fif script by: `fift -s scripts/fif/change-validator.fif new-validator-address`.
+In case the owner is using a **cold wallet** (recommended), [change-validator.fif](https://github.com/orbs-network/single-nominator/blob/main/scripts/fif/change-validator.fif) can be used to generate a boc body which includes change-validator opcode and the new validator address. <br/>
+Command line: `fift -s scripts/fif/change-validator.fif new-validator-address`.
 This script will generate a boc body (named change-validator.boc) that should be signed and send from the owner's wallet. <br/>
 From the black computer the owner should run:
 * create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B change-validator.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The change-validator.boc is the boc generated above.

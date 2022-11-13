@@ -134,7 +134,7 @@ Environment variables can be set by export or using .env file. For example: `exp
 4. The deployment script will print the nominator contract address. Use str-to-addr.fif to create .addr file from the base64 string representation of the contract address. <br/>
 This file will be used by Mytonctrl and should be placed on the validator node at `~/.local/share/mytoncore/pools/` directory. Mytonctrl will search for pools in this folder (usePool should be set to true in Mytonctrl to use pools). <br/>
 Example: `fift -s scripts/fif/str-to-addr.fif Ef-C8SHoQ72S2fgqzhtUkzFG0krKKvIeCqpn4AjyXyhUUpIz`.
-5. Before moving funds to the nominator contract it is important to approve the ownership of the owner address. It is recommended to send 1 TON to the nominator contract and use the withdrawal procedure described in the section below.
+5. Before moving funds to the nominator contract it is important to approve the ownership of the owner address. It is recommended to send 1 TON to the nominator contract and use the withdrawal procedure described [here](https://github.com/orbs-network/single-nominator#1-withdraw).
 
 ## Mytonctrl settings
 

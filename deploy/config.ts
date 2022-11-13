@@ -1,9 +1,12 @@
 import {TonClient, Address} from "ton";
+require('dotenv').config();
+
+if (!process.env.OWNER_ADDRESS) throw ('Please set OWNER_ADDRESS environment variable');
+if (!process.env.VALIDATOR_ADDRESS) throw ('Please set VALIDATOR_ADDRESS environment variable');
 
 export const config = {
-	owner: Address.parse('EQBJbS35Ec-efHt7bOxPl3Vitw7CXLUBU_CT0r0NnVnOtpGy'),
-	validator: Address.parse('Ef9SGIB3Pix1RxyAGR9jQa5sA4Ug5Ljw3QAJsdF7euE1EpFI')
+	owner: Address.parse(process.env.OWNER_ADDRESS),
+	validator: Address.parse(process.env.VALIDATOR_ADDRESS)
 };
 
-
-export const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://toncenter.com/api/v2/jsonRPC", apiKey: "3ebe42d62396ff96725e0de9e71cae2916c1b690d3ffc8a80ecd9af4e8fef6f2"});
+export const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://toncenter.com/api/v2/jsonRPC", apiKey: process.env.TON_API_KEY});

@@ -6,7 +6,7 @@ This is an alternative simplified implementation for the [Nominator Pool](https:
 
 ## The go-to solution for validators
 
-This smart contract is intended to be the go-to solution for TON validators that have enough stake to validate by themselves. The other available alternatives are: 
+This smart contract is intended to be the go-to solution for TON validators that have enough stake to validate by themselves. The other available alternatives are:
 * using a [hot wallet](https://github.com/ton-blockchain/ton/blob/master/crypto/smartcont/wallet3-code.fc) (insecure since a cold wallet is needed to prevent theft if the validator node is hacked)
 * using [restricted-wallet](https://github.com/EmelyanenkoK/nomination-contract/blob/master/restricted-wallet/wallet.fc) (which is unmaintained and has unresolved attack vectors like gas drainage attacks)
 * using [Nominator Pool](https://github.com/ton-blockchain/nominator-pool) with max_nominators_count = 1 (unnecessarily complex with a larger attack surface)
@@ -83,7 +83,7 @@ Assuming that you are a validator with enough stake to validate by yourself, the
 
 ### 1. Simple hot wallet
 
-This is the simplest setup where MyTonCtrl is connected to the same [standard wallet](https://github.com/ton-blockchain/ton/blob/master/crypto/smartcont/wallet3-code.fc) that holds the funds. Since this wallet is connected to the Internet, it is considered a hot wallet. 
+This is the simplest setup where MyTonCtrl is connected to the same [standard wallet](https://github.com/ton-blockchain/ton/blob/master/crypto/smartcont/wallet3-code.fc) that holds the funds. Since this wallet is connected to the Internet, it is considered a hot wallet.
 
 <img src="https://i.imgur.com/6svyuIL.png" width=900 />
 
@@ -118,3 +118,76 @@ This is the setup implemented in this repo. It's a very simplified version of th
 <img src="https://i.imgur.com/YPuRUqr.png" width=900 />
 
 If you have a single nominator that holds all stake for validation, this is the most secure setup you can use. On top of the simplicity, this contract provides the owner with multiple emergency safeguards that can recover stake even in extreme scenarios like *Elector* upgrades that break the recover stake interface.
+
+
+## How to deploy
+
+In order to deploy the contract use the following procedure:
+1. set the following environment variables:
+* OWNER_ADDRESS
+* VALIDATOR_ADDRESS
+* TON_ENDPOINT (default: `https://toncenter.com/api/v2/jsonRPC`)
+* TON_API_KEY <br/>
+Environment variables can be set by export or using .env file. For example: `export VALIDATOR_ADDRESS=Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU` or insert `VALIDATOR_ADDRESS=Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU` to .env file.
+2. run `npm run init-deploy-wallet` to init deploy wallet. The script will deploy a wallet (if not already deployed) and print its address. Make sure you have funds in this address which will be used for deployment. 1 TON should be enough for deployment.
+3. run `npm run deploy`. This script will deploy the single-nominator contract with the OWNER_ADDRESS and VALIDATOR_ADDRESS (if not already deployed) which were set as the environment variables.
+4. The deployment script will print the nominator contract address. Use str-to-addr.fif to create .addr file from the base64 string representation of the contract address. <br/>
+This file will be used by Mytonctrl and should be placed on the validator node at `~/.local/share/mytoncore/pools/` directory. Mytonctrl will search for pools in this folder (usePool should be set to true in Mytonctrl to use pools). <br/>
+Example: `fift -s scripts/fif/str-to-addr.fif Ef-C8SHoQ72S2fgqzhtUkzFG0krKKvIeCqpn4AjyXyhUUpIz`.
+5. Before moving funds to the nominator contract it is important to approve the ownership of the owner address. It is recommended to send 1 TON to the nominator contract and use the withdrawal procedure described in the section below.
+
+## Mytonctrl settings
+
+Single nominator contract is compatible with Mytonctrl when set to usePool mode. The following steps should be taken:
+1. Copy the nominator .addr file (generated as described above) to `~/.local/share/mytoncore/pools/`.
+2. From Mytonctrl use:
+   * `set usePool true`
+   * `set stake 350000` to set the stake to 350,000. Make sure to change the stake to the desired amount.
+3. Make sure you have a validator wallet whose address match the VALIDATOR_ADDRESS that used when deploying the contract. You can use `scripts/ts/read-contract-state.ts` to read the owner and validator addresses.
+4. Copy all fif script located in this repository under `mytonctrl-scripts/` directory. Mytonctrl will need all the scripts in order for the validator node to operate smoothly.
+
+
+## Owner only messages
+
+The nominator owner has 4 roles:
+### 1. withdraw
+Used to withdraw funds to the owner's wallet. To withdraw the funds the owner should send a message with a body that includes: opcode=0x1000 (32 bits), query_id (64 bits) and withdraw amount (stored as coin variable). The nominator contract will send the funds with BOUNCABLE flag and mode=64. <br/><br/>
+In case the owner is using a **hot wallet** (not recommended), the script located at scripts/ts/withdraw-deeplink.ts can be used to generate a deeplink to initiate withdraw from tonkeeper wallet. <br/>
+Run this script by: `ts-node scripts/ts/withdraw-deeplink.ts single-nominator-addr withdraw-amount` where:
+* single-nominator-addr is the single nominator address the owner wishes to withdraw from.
+* withdraw-amount is the amount to withdraw. The nominator contract will leave 1 TON in the contract so the actual amount that will be sent to the owner address will be the minimum between the requested amount and the contract balance - 1. <br/>
+The owner should run the deeplink from a phone with the tonkeeper wallet. <br/><br/>
+
+In case the owner is using a **cold wallet** (recommended), the script located at scripts/fif/withdraw.fif can be used to generate a boc body which includes withdraw opcode and the amount to withdraw. <br/>
+Run the fif script by: `fift -s scripts/fif/withdraw.fif withdraw-amount` where withdraw-amount is the amount to withdraw from the nominator contract to the owner's wallet. As described above the nominator contract will leave at least 1 TON in the contract. <br/>
+This script will generate a boc body (named withdraw.boc) that should be signed and send from the owner's wallet. <br/>
+From the black computer the owner should run:
+* create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B withdraw.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The withdraw.boc is the boc generated above.
+* from a computer with access to the internet run: `lite-client -C global.config.json -c 'sendfile wallet-query.boc'` to send the boc file (wallet-query.boc) generated in the prev step.
+
+### 2. change-validator
+Used to change the validator address. The validator can only send NEW_STAKE and RECOVER_STAKE to the elector. In case the validator private key was compromised, the validator address can be changed. Notice that in this case the funds are safe as only the owner can withdraw the funds.<br/>
+
+In case the owner is using a **hot wallet**, the script located at scripts/ts/change-address-deeplink.ts can be used to generate a deeplink to change the validator address. <br/>
+Run this script by: `ts-node scripts/ts/change-address-deeplink.ts single-nominator-addr new-validator-address` where:
+* single-nominator-addr is the single nominator address.
+* new-validator-address (defaults to ZERO address) is the address of the new validator. If you want to immediately disable the validator and only later set a new validator it might be convenient to set the validator address to the ZERO address.
+The owner should run the deeplink from a phone with the tonkeeper wallet. <br/><br/>
+
+In case the owner is using a **cold wallet**, the script located at scripts/fif/change-validator.fif can be used to generate a boc body which includes change-validator opcode and the new validator address. <br/>
+Run the fif script by: `fift -s scripts/fif/change-validator.fif new-validator-address`.
+This script will generate a boc body (named change-validator.boc) that should be signed and send from the owner's wallet. <br/>
+From the black computer the owner should run:
+* create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B change-validator.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The change-validator.boc is the boc generated above.
+* from a computer with access to the internet run: `lite-client -C global.config.json -c 'sendfile wallet-query.boc'` to send the boc file (wallet-query.boc) generated in the prev step.
+
+### 3. send-raw-msg
+This opcode is not expected to be used under normal conditions. <br/>
+It can be used to send **any** message from the nominator contract (must be signed and sent from owner's wallet). <br/>
+You might want to use this opcode if, for example, the elector contract address was unexpectedly changed and the funds are still locked in the elector. In this case RECOVER_STAKE from validator will not work and the owner will have to build a specific message. <br/>
+The message body should include: opcode=0x7702 (32 bits), query_id (64 bits), mode (8 bits), reference to the cell msg which will be sent as a raw message. <br/>
+
+### 4. upgrade
+This is an emergency opcode and probably should never not be used.<br/>
+It can be used to upgrade the nominator contract. <br/>
+The message body should include: opcode=0x9903 (32 bits), query_id (64 bits), reference to the new cell code. <br/>

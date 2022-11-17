@@ -39,7 +39,10 @@ async function deploy() {
 	});
 
 	await client.sendExternalMessage(deployWallet, transfer);
-	await waitForContractToBeDeployed(client, contract.address);
+	let isDeployed = await waitForContractToBeDeployed(client, contract.address);
+	if(!isDeployed) {
+		throw `single nominator failed to deploy`
+	}
 	console.log(`- Deploy transaction sent successfully to -> ${contract.address.toFriendly()} [seqno:${seqno}]`);
 	await sleep(10000);
 	return contract;

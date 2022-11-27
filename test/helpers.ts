@@ -10,14 +10,17 @@ import {execSync} from "child_process";
 
 export async function waitForContractToBeDeployed(client: TonClient, deployedContract: Address) {
   const seqnoStepInterval = 2500;
+  let retval = false;
   console.log(`⏳ waiting for contract to be deployed at [${deployedContract.toFriendly()}]`);
   for (var attempt = 0; attempt < 10; attempt++) {
     await sleep(seqnoStepInterval);
     if (await client.isContractDeployed(deployedContract)) {
+      retval = true;
       break;
     }
   }
   console.log(`⌛️ waited for contract deployment ${((attempt + 1) * seqnoStepInterval) / 1000}s`);
+  return retval;
 }
 
 export async function waitForSeqno(walletContract: WalletContract, seqno: number) {

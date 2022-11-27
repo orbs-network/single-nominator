@@ -200,4 +200,4 @@ This repo includes a test folder with an e2e test (`e2e.ts`) which should be run
 To run the e2e use: `npm run e2e`. It should deploy the nominator contract and run full e2e test. <br/>
 This folder also includes a unit test file (`single-nominator.test.ts`) which uses the evm-contract-executor. <br/>
 To run the unit test use: `npm run test.`
- 
+

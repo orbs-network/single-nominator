@@ -63,6 +63,8 @@ int check_new_stake_msg(slice cs) impure inline_ref;
 ;; main entry point for receiving messages
 ;; my_balance contains balance after adding msg_value
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    var (owner_address, validator_address) = load_data();
+
     if (in_msg_body.slice_empty?()) {
         return ();
     }
@@ -74,8 +76,6 @@ int check_new_stake_msg(slice cs) impure inline_ref;
         return ();
     }
     slice sender = cs~load_msg_addr();
-
-    var (owner_address, validator_address) = load_data();
 
     int op = in_msg_body~load_uint(32);
     int query_id = in_msg_body~load_uint(64);

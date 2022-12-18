@@ -9,6 +9,7 @@ const NOMINATOR_MIN_TON = 2;
 async function deploy() {
 
 	const contract = await SingleNominator.create({owner: config.owner, validator: config.validator});
+	console.log(`config.owner: ${config.owner}`);
 
 	let deployWalletKey = await initDeployKey("");
 	let deployWallet = await initWallet(client, deployWalletKey.publicKey);

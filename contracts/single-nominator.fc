@@ -36,10 +36,13 @@ const ERROR::INSUFFICIENT_ELECTOR_FEE = 0x2005;
 
 (slice, slice) load_data() inline {
     slice ds = get_data().begin_parse();
-    return (
-        ds~load_msg_addr(), ;; owner_address
-        ds~load_msg_addr() ;; validator_address
-    );
+
+    slice owner_address = ds~load_msg_addr();
+    slice validator_address = ds~load_msg_addr();
+
+	ds.end_parse();
+
+    return (owner_address, validator_address);
 }
 
 () save_data(slice owner_address, slice validator_address) impure inline {
@@ -84,6 +87,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
         if (op == OP::WITHDRAW) {
             int amount = in_msg_body~load_coins();
             amount = min(amount, my_balance - msg_value - MIN_TON_FOR_STORAGE);
+            throw_unless(ERROR::INSUFFICIENT_BALANCE, amount > 0);
             send_msg(owner_address, amount, null(), BOUNCEABLE, MODE::SEND_MODE_REMAINING_AMOUNT); ;; owner pays gas fees
         }
 
@@ -124,7 +128,7 @@ int check_new_stake_msg(slice cs) impure inline_ref;
             check_new_stake_msg(in_msg_body);
             throw_unless(ERROR::INSUFFICIENT_BALANCE, stake_amount <= my_balance - msg_value - MIN_TON_FOR_STORAGE);
 
-            send_msg(elector_address(), stake_amount, begin_cell().store_uint(op, 32).store_uint(query_id, 64).store_slice(msg).end_cell(), BOUNCEABLE, MODE::SEND_MODE_REMAINING_AMOUNT); ;; bounceable, validator pays gas fees
+            send_msg(elector_address(), stake_amount, begin_cell().store_uint(OP::NEW_STAKE, 32).store_uint(query_id, 64).store_slice(msg).end_cell(), BOUNCEABLE, MODE::SEND_MODE_REMAINING_AMOUNT); ;; bounceable, validator pays gas fees
         }
 
         ;; recover stake from elector of previous validation cycle (sent every period ~18 hours)

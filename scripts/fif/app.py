@@ -28,7 +28,7 @@ args = parser.parse_args()
 assert path.exists(args.pk_filename), "pk_filename file must exists"
 
 
-os.system("export FIFTPATH='/Users/doronavi-guy/src/ton/crypto/fift/lib'")
+os.system("export FIFTPATH='/Users/user/src/ton/crypto/fift/lib'")
 
 
 def sign_print_qr(boc_filename=None, boc_output="outboc"):

@@ -59,7 +59,7 @@ Some of these attack vectors cannot be mitigated using the regular [Nominator Po
 
 ### Security audits
 
-Coming soon - feel free to report any problem in issues
+Full security audit conducted by Certik and avialable in this repo [Certik Audit](https://github.com/orbs-network/single-nominator/blob/main/certik-audit.pdf).
 
 &nbsp;
 

@@ -6,3 +6,4 @@ bin
 deploy.config.json
 *.boc
 *.addr
+.idea

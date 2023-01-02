@@ -1,9 +1,7 @@
 import argparse
-import os
 import base64
-import os.path
 from os import path
-import json
+from os import system
 
 WALLET_ID = 698983191
 TIMEOUT = 86400
@@ -54,13 +52,6 @@ def validate_args(args):
         assert args.new_validator_address is not None, 'please provide new_validator_address'
 
 
-def read_id_addr(file_name='addr_book.json'):
-    with open(file_name, 'r') as f:
-        addr_book = json.load(f)
-
-    return addr_book
-
-
 def sign_tx(args, boc_filename=None):
 
     if boc_filename:
@@ -79,7 +70,7 @@ def sign_tx(args, boc_filename=None):
                     seqno=args.seqno, amount=args.ton_amount, timeout=TIMEOUT,
                     boc_output=BOC_OUTPUT_FILE_NAME)
 
-    os.system(wallet_cmd)
+    system(wallet_cmd)
 
 
 def print_qr_code():
@@ -93,7 +84,7 @@ def print_qr_code():
     boc_base64 = base64.b64encode(boc_buffer).decode()
     url = BOC_PARSER_ESTIMATOR + boc_base64
     print(url)
-    os.system("qr '{}' ".format(url))
+    system("qr '{}' ".format(url))
 
 
 def main():
@@ -101,15 +92,15 @@ def main():
     args = parse_args()
     validate_args(args)
 
-    os.system("export FIFTPATH='/home/amnesia/Tor Browser/fiftpath/fift/lib'")
+    system("export FIFTPATH='/home/amnesia/Tor Browser/fiftpath/fift/lib'")
 
     if args.action == 'withdraw':
-        os.system('./fift -s withdraw.fif {}'.format(args.withdraw_amount))
+        system('./fift -s withdraw.fif {}'.format(args.withdraw_amount))
         sign_tx(args, "withdraw.boc")
         print_qr_code()
 
     elif args.action == 'set-validator':
-        os.system('./fift -s change-validator.fif {}'.format(args.new_validator_address))
+        system('./fift -s change-validator.fif {}'.format(args.new_validator_address))
         sign_tx(args, "change-validator.boc")
         print_qr_code()
 

@@ -10,8 +10,6 @@ TIMEOUT = 86400
 BOC_PARSER_ESTIMATOR = "https://ton-defi-org.github.io/boc-parser-estimator/#"
 BOC_OUTPUT_FILE_NAME = "boc-output"
 
-os.system("export FIFTPATH='/home/amnesia/Tor Browser/fiftpath/fift/lib'")
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -46,7 +44,8 @@ def parse_args():
 
 
 def validate_args(args):
-    assert path.exists(args.pk_filename + '.pk'), "pk_filename file must exists"
+    assert path.exists(args.pk_filename + '.pk'), "pk file not found"
+    assert path.exists(args.pk_filename + '.addr'), "addr file not found"
 
     if args.action == 'withdraw':
         assert args.withdraw_amount is not None, 'please provide withdraw_amount'
@@ -101,6 +100,8 @@ def main():
 
     args = parse_args()
     validate_args(args)
+
+    os.system("export FIFTPATH='/home/amnesia/Tor Browser/fiftpath/fift/lib'")
 
     if args.action == 'withdraw':
         os.system('./fift -s withdraw.fif {}'.format(args.withdraw_amount))

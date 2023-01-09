@@ -42,8 +42,8 @@ def parse_args():
 
 
 def validate_args(args):
-    assert path.exists(args.pk_filename + '.pk'), "pk file not found"
-    assert path.exists(args.pk_filename + '.addr'), "addr file not found"
+    assert path.exists(args.pk_filename + '.pk'), "pk file was not found"
+    assert path.exists(args.pk_filename + '.addr'), "addr file was not found"
 
     if args.action == 'withdraw':
         assert args.withdraw_amount is not None, 'please provide withdraw_amount'
@@ -76,7 +76,7 @@ def sign_tx(args, boc_filename=None):
 def print_qr_code():
     boc_output = BOC_OUTPUT_FILE_NAME + ".boc"
 
-    assert path.exists(boc_output), " {} doesn't exists".format(boc_output)
+    assert path.exists(boc_output), " {} was not found".format(boc_output)
 
     with open(boc_output, "rb") as f:
         boc_buffer = f.read()

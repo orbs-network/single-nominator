@@ -56,22 +56,22 @@ class WalletV3SigningMessage implements Message {
 
 export class SingleNominator implements Contract {
 
-    static create(opts: {owner: Address; validator: Address}) {
-		// Build initial code and data
-		let initialCode = this.getCode()[0];
-		let initialData = new Cell();
-		initialData.bits.writeAddress(opts.owner);
-		initialData.bits.writeAddress(opts.validator);
-
-        return new SingleNominator(initialCode, initialData, -1);
-    }
-
     readonly address: Address;
     readonly source: ContractSource;
-
+    
     constructor(initialCode: Cell, initialData: Cell, workchain = -1) {
         this.source = {initialCode: initialCode, initialData: initialData, workchain: -1} as ContractSource;
-		this.address = contractAddress({initialCode: initialCode, initialData: initialData, workchain: workchain});
+        this.address = contractAddress({initialCode: initialCode, initialData: initialData, workchain: workchain});
+    }
+
+    static create(opts: {owner: Address; validator: Address}) {
+        // Build initial code and data
+        let initialCode = this.getCode()[0];
+        let initialData = new Cell();
+        initialData.bits.writeAddress(opts.owner);
+        initialData.bits.writeAddress(opts.validator);
+
+        return new SingleNominator(initialCode, initialData, -1);
     }
 
     static getCode(): Cell[] {

@@ -59,19 +59,7 @@ Some of these attack vectors cannot be mitigated using the regular [Nominator Po
 
 ### Security audits
 
-Full security audit conducted by Certik and avialable in this repo [Certik Audit](https://github.com/orbs-network/single-nominator/blob/main/certik-audit.pdf).
-
-&nbsp;
-
-## Using this contract
-
-* Review the [contract](https://github.com/orbs-network/single-nominator/blob/main/contracts/single-nominator.fc) and tests to make sure you're happy with the implementation
-* Install the project using `npm install` (make sure you have all dependencies from [tonstarter](https://github.com/ton-defi-org/tonstarter-contracts))
-* Build the contract using `npm run build`
-* Run the tests using `npm run test`
-* Deploy the contract using `npm run deploy`
-* The contract plugs in seamlessly to MyTonCtrl with the same interface as [Nominator Pool](https://github.com/ton-blockchain/nominator-pool)
-* A single instance of the contract is used for both even and odd validation cycles (single contract config in MyTonCtrl). The stake amounts configured in MyTonCtrl must be absolute (set to half the total stake amount) to support the single instance mode.
+Full security audit conducted by Certik and available in this repo - [Certik Audit](https://github.com/orbs-network/single-nominator/blob/main/certik-audit.pdf).
 
 &nbsp;
 
@@ -119,8 +107,19 @@ This is the setup implemented in this repo. It's a very simplified version of th
 
 If you have a single nominator that holds all stake for validation, this is the most secure setup you can use. On top of the simplicity, this contract provides the owner with multiple emergency safeguards that can recover stake even in extreme scenarios like *Elector* upgrades that break the recover stake interface.
 
+&nbsp;
 
-## How to deploy
+## Using this contract
+
+* Review the [contract](https://github.com/orbs-network/single-nominator/blob/main/contracts/single-nominator.fc) and tests to make sure you're happy with the implementation
+* Install the project using `npm install` (make sure you have all dependencies from [tonstarter](https://github.com/ton-defi-org/tonstarter-contracts))
+* Build the contract using `npm run build`
+* Run the tests using `npm run test`
+* Deploy the contract using `npm run deploy`
+* The contract plugs in seamlessly to MyTonCtrl with the same interface as [Nominator Pool](https://github.com/ton-blockchain/nominator-pool)
+* A single instance of the contract is used for both even and odd validation cycles (single contract config in MyTonCtrl). The stake amounts configured in MyTonCtrl must be absolute (set to half the total stake amount) to support the single instance mode.
+
+### How to deploy
 
 In order to deploy the contract use the following procedure:
 1. set the following environment variables:
@@ -136,7 +135,7 @@ This file will be used by Mytonctrl and should be placed on the validator node a
 Example: `fift -s scripts/fif/str-to-addr.fif Ef-C8SHoQ72S2fgqzhtUkzFG0krKKvIeCqpn4AjyXyhUUpIz`.
 5. Before moving funds to the nominator contract it is important to approve the ownership of the owner address. It is recommended to send 1 TON to the nominator contract and use the withdrawal procedure described [here](https://github.com/orbs-network/single-nominator#1-withdraw).
 
-## Mytonctrl settings
+### Mytonctrl settings
 
 Single nominator contract is compatible with Mytonctrl when set in usePool mode. The following steps should be taken:
 1. Copy the nominator .addr file (generated as described above) to `~/.local/share/mytoncore/pools/`.
@@ -146,18 +145,17 @@ Single nominator contract is compatible with Mytonctrl when set in usePool mode.
 3. Make sure you have a validator wallet whose address match the VALIDATOR_ADDRESS that used when deploying the contract. You can use `scripts/ts/read-contract-state.ts` to read the owner and validator addresses.
 4. Copy all fif script located in [mytonctrl-scripts](https://github.com/orbs-network/single-nominator/tree/main/mytonctrl-scripts) to the node under `~/.local/share/mytoncore/contracts/nominator-pool/func/`. Mytonctrl will need all the scripts in order for the validator node to operate smoothly.
 
+### Owner only messages
 
-## Owner only messages
+The nominator owner can perform 4 operations:
 
-The nominator owner has 4 roles.
-
-### 1. withdraw
+#### 1. `withdraw`
 Used to withdraw funds to the owner's wallet. To withdraw the funds the owner should send a message with a body that includes: opcode=0x1000 (32 bits), query_id (64 bits) and withdraw amount (stored as coin variable). The nominator contract will send the funds with BOUNCABLE flag and mode=64. <br/><br/>
 In case the owner is using a **hot wallet** (not recommended), [withdraw-deeplink.ts](https://github.com/orbs-network/single-nominator/blob/main/scripts/ts/withdraw-deeplink.ts) can be used to generate a deeplink to initiate a withdrawal from tonkeeper wallet. <br/>
 Command line: `ts-node scripts/ts/withdraw-deeplink.ts single-nominator-addr withdraw-amount` where:
 * single-nominator-addr is the single nominator address the owner wishes to withdraw from.
 * withdraw-amount is the amount to withdraw. The nominator contract will leave 1 TON in the contract so the actual amount that will be sent to the owner address will be the minimum between the requested amount and the contract balance - 1. <br/>
-The owner should run the deeplink from a phone with the tonkeeper wallet. <br/><br/>
+The owner should run the deeplink from a phone with the tonkeeper wallet. <br/>
 
 In case the owner is using a **cold wallet** (recommended), [withdraw.fif](https://github.com/orbs-network/single-nominator/blob/main/scripts/fif/withdraw.fif) can be used to generate a boc body which includes withdraw opcode and the amount to withdraw. <br/>
 Command line: `fift -s scripts/fif/withdraw.fif withdraw-amount` where withdraw-amount is the amount to withdraw from the nominator contract to the owner's wallet. As described above the nominator contract will leave at least 1 TON in the contract. <br/>
@@ -166,14 +164,14 @@ From the black computer the owner should run:
 * create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B withdraw.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The withdraw.boc is the boc generated above.
 * from a computer with access to the internet run: `lite-client -C global.config.json -c 'sendfile wallet-query.boc'` to send the boc file (wallet-query.boc) generated in the prev step.
 
-### 2. change-validator
+#### 2. `change-validator`
 Used to change the validator address. The validator can only send NEW_STAKE and RECOVER_STAKE to the elector. In case the validator private key was compromised, the validator address can be changed. Notice that in this case the funds are safe as only the owner can withdraw the funds.<br/>
 
 In case the owner is using a **hot wallet** (not recommended), [change-validator-deeplink.ts](https://github.com/orbs-network/single-nominator/blob/main/scripts/ts/change-validator-deeplink.ts) can be used to generate a deeplink to change the validator address. <br/>
 Command line: `ts-node scripts/ts/change-validator-deeplink.ts single-nominator-addr new-validator-address` where:
 * single-nominator-addr is the single nominator address.
 * new-validator-address (defaults to ZERO address) is the address of the new validator. If you want to immediately disable the validator and only later set a new validator it might be convenient to set the validator address to the ZERO address.
-The owner should run the deeplink from a phone with tonkeeper wallet. <br/><br/>
+The owner should run the deeplink from a phone with tonkeeper wallet. <br/>
 
 In case the owner is using a **cold wallet** (recommended), [change-validator.fif](https://github.com/orbs-network/single-nominator/blob/main/scripts/fif/change-validator.fif) can be used to generate a boc body which includes change-validator opcode and the new validator address. <br/>
 Command line: `fift -s scripts/fif/change-validator.fif new-validator-address`.
@@ -182,17 +180,18 @@ From the black computer the owner should run:
 * create and sign the tx: `fift -s wallet-v3.fif my-wallet single_nominator_address sub_wallet_id seqno amount -B change-validator.boc` where my-wallet is the owner's pk file (without extension). For amount 1 TON should be enough to pay fees (remaining amount will be returned to owner). The change-validator.boc is the boc generated above.
 * from a computer with access to the internet run: `lite-client -C global.config.json -c 'sendfile wallet-query.boc'` to send the boc file (wallet-query.boc) generated in the prev step.
 
-### 3. send-raw-msg
+#### 3. `send-raw-msg`
 This opcode is not expected to be used under normal conditions. <br/>
 It can be used to send **any** message from the nominator contract (must be signed and sent from owner's wallet). <br/>
 You might want to use this opcode if, for example, the elector contract address was unexpectedly changed and the funds are still locked in the elector. In this case RECOVER_STAKE from validator will not work and the owner will have to build a specific message. <br/>
 The message body should include: opcode=0x7702 (32 bits), query_id (64 bits), mode (8 bits), reference to the cell msg which will be sent as a raw message. <br/>
 
-### 4. upgrade
+#### 4. `upgrade`
 This is an emergency opcode and probably should never not be used.<br/>
 It can be used to upgrade the nominator contract. <br/>
 The message body should include: opcode=0x9903 (32 bits), query_id (64 bits), reference to the new cell code. <br/>
 
+&nbsp;
 
 ## Tests
 
@@ -200,4 +199,3 @@ This repo includes a test folder with an e2e test (`e2e.ts`) which should be run
 To run the e2e use: `npm run e2e`. It should deploy the nominator contract and run full e2e test. <br/>
 This folder also includes a unit test file (`single-nominator.test.ts`) which uses the evm-contract-executor. <br/>
 To run the unit test use: `npm run test.`
-

@@ -1,9 +1,10 @@
 import { Address, beginCell, toNano } from "ton";
+import { toUrlSafe } from "./utils";
 const ZERO_ADDR = '-1:0000000000000000000000000000000000000000000000000000000000000000';
 
 
 function buildSetValidatorMessage(newValidator: Address) {
-    return encodeURIComponent(beginCell().storeUint(0x1001 ,32).storeUint(1, 64).storeAddress(newValidator).endCell().toBoc({idx: false}).toString("base64"));
+    return toUrlSafe(beginCell().storeUint(0x1001 ,32).storeUint(1, 64).storeAddress(newValidator).endCell().toBoc({idx: false}).toString("base64"));
 }
 
 export function changeValidator(nominator: Address, newValidator: Address) : string {

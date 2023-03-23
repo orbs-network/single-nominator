@@ -1,10 +1,8 @@
 import { Address, TonClient, fromNano, Cell } from "ton";
-
+import {config, client} from "../../deploy/config";
 
 async function readContractState(nominatorAddr: string) {
-  const client = new TonClient({
-    endpoint: "https://scalable-api.tonwhales.com/jsonRPC",
-  });
+  
   let state = await client.getContractState(Address.parse(nominatorAddr));
   console.log(state);
   console.log(fromNano(state.balance));

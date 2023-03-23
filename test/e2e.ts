@@ -1,6 +1,6 @@
 import { waitForContractToBeDeployed, sleep, initWallet, initDeployKey } from "./helpers";
 import { SingleNominator } from "../contracts-ts/single-nominator";
-import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell, parseTransaction} from "ton";
+import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, WalletContract, toNano, StateInit, beginCell, fromNano, Cell, parseTransaction, EmptyMessage} from "ton";
 
 import {waitForSeqno, compileFuncToB64} from "./helpers";
 import { expect } from "chai";
@@ -8,7 +8,14 @@ import {Buffer} from "buffer";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 
-const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://testnet.toncenter.com/api/v2/jsonRPC", apiKey: process.env.TON_API_KEY}, );
+console.log("-==== process.env ====----",{
+  endpoint: process.env.TON_ENDPOINT ,
+  apiKey: process.env.TON_API_KEY,
+});
+
+
+
+export const client = new TonClient({ endpoint: process.env.TON_ENDPOINT || "https://toncenter.com/api/v2/jsonRPC", apiKey: "f20ff0043ded8c132d0b4b870e678b4bbab3940788cbb8c8762491935cf3a460"});
 const BLOCK_TIME = 10000;
 const NOMINATOR_MIN_TON = 3;
 const DEPLOYER_MIN_TON = 6;
@@ -40,16 +47,16 @@ function buildMessage(op: number | null, query_id: number, eitherBit = false, am
   if (op == null) return beginCell().endCell();
 
   let cell = beginCell()
-  				.storeUint(op, 32)
-  				.storeUint(query_id, 64)
-  				.storeCoins(toNano(amount.toFixed(2)))
-				.storeUint(0, 256) // validator_pubkey
-				.storeUint(0, 32) // stake_at
-				.storeUint(0, 32) // max_factor
-				.storeUint(0, 256) // adnl_addr
+    .storeUint(op, 32)
+    .storeUint(query_id, 64)
+    .storeCoins(toNano(amount.toFixed(2)))
+    .storeUint(0, 256) // validator_pubkey
+    .storeUint(0, 32) // stake_at
+    .storeUint(0, 32) // max_factor
+    .storeUint(0, 256) // adnl_addr
 
   if (eitherBit) {
-	  cell.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+    cell.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
   }
 
   return cell.endCell();
@@ -58,28 +65,28 @@ function buildMessage(op: number | null, query_id: number, eitherBit = false, am
 function newStakeMsg(query_id: number) {
 
   return beginCell()
-  				.storeUint(NEW_STAKE, 32)
-  				.storeUint(query_id, 64)
-  				.storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
-				.storeUint(0, 256) // validator_pubkey
-				.storeUint(0, 32) // stake_at
-				.storeUint(0, 32) // max_factor
-				.storeUint(0, 256) // adnl_addr
-				.storeRef(beginCell().storeUint(0, 256).endCell()) // signature
-		.endCell();
+    .storeUint(NEW_STAKE, 32)
+    .storeUint(query_id, 64)
+    .storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
+    .storeUint(0, 256) // validator_pubkey
+    .storeUint(0, 32) // stake_at
+    .storeUint(0, 32) // max_factor
+    .storeUint(0, 256) // adnl_addr
+    .storeRef(beginCell().storeUint(0, 256).endCell()) // signature
+    .endCell();
 }
 
 function partialNewStakeMsg(query_id: number) {
 
   return beginCell()
-  				.storeUint(NEW_STAKE, 32)
-  				.storeUint(query_id, 64)
-  				.storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
-				.storeUint(0, 256) // validator_pubkey
-				.storeUint(0, 32) // stake_at
-				.storeUint(0, 32) // max_factor
-				.storeUint(0, 256) // adnl_addr
-		.endCell();
+    .storeUint(NEW_STAKE, 32)
+    .storeUint(query_id, 64)
+    .storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
+    .storeUint(0, 256) // validator_pubkey
+    .storeUint(0, 32) // stake_at
+    .storeUint(0, 32) // max_factor
+    .storeUint(0, 256) // adnl_addr
+    .endCell();
 }
 
 function recoverStakeMsg(query_id: number) {
@@ -91,10 +98,10 @@ function recoverStakeMsg(query_id: number) {
 }
 
 function parseTxDetails(data: any) {
-    const currentContract = data["inMessage"]["destination"];
-    let boc = Cell.fromBoc(Buffer.from(data.data, "base64"));
-    const wc = Address.parse(currentContract.toString()).workChain;
-    return parseTransaction(wc, boc[0].beginParse());
+  const currentContract = data["inMessage"]["destination"];
+  let boc = Cell.fromBoc(Buffer.from(data.data, "base64"));
+  const wc = Address.parse(currentContract.toString()).workChain;
+  return parseTransaction(wc, boc[0].beginParse());
 }
 
 async function deployNominator(
@@ -106,9 +113,9 @@ async function deployNominator(
 ) {
 
   const contract = await SingleNominator.create({owner, validator});
-
+  
   if (await client.isContractDeployed(contract.address)) {
-    console.log(`contract: ${contract.address.toFriendly()} already Deployed`);
+    console.log(`deployNominator : contract: ${contract.address.toFriendly()} already Deployed`);
     return contract;
   }
 
@@ -119,7 +126,7 @@ async function deployNominator(
     sendMode: 1 + 2,
     order: new InternalMessage({
       to: contract.address,
-      value: toNano(NOMINATOR_MIN_TON * 2),
+      value: toNano(0.3),
       bounce: false,
       body: new CommonMessageInfo({
         stateInit: new StateInit({ data: contract.source.initialData, code: contract.source.initialCode }),
@@ -168,7 +175,7 @@ async function sendTxToNominator(
   payload: Cell
 ) {
   let seqno = await validatorWallet.getSeqNo();
-  console.log(`send message to nominator with payload: ${payload.toString()}`);
+  console.log(`send message to nominator with payload: ${payload.toString()}, validatorWallet: ${validatorWallet.address.toFriendly()} , nominatorAddress = ${nominatorAddress.toFriendly()}`);
 
   const transfer = await validatorWallet.createTransfer({
     secretKey: validatorPrivateKey,
@@ -180,13 +187,15 @@ async function sendTxToNominator(
       bounce: true,
       body: new CommonMessageInfo({
         body: new CellMessage(payload)
-	  }),
+      }),
     }),
   });
 
   try {
     await client.sendExternalMessage(validatorWallet, transfer);
   } catch (e) {
+    console.log(e);
+    
     return false;
   }
 
@@ -217,7 +226,7 @@ describe("e2e test suite", () => {
     owner = deployWallet;
 
     console.log(`deployer contract address: ${deployWallet.address.toFriendly()}`);
-    console.log(`https://tonsandbox.com/explorer/address/${deployWallet.address.toFriendly()}`);
+    console.log(`https://testnet.tonapi.io/account/${deployWallet.address.toFriendly()}`);
 
     balance = parseFloat(fromNano((await client.getBalance(deployWallet.address)).toNumber()));
     if (balance < DEPLOYER_MIN_TON) {
@@ -227,16 +236,18 @@ describe("e2e test suite", () => {
     validatorWalletKey = await initDeployKey(VALIDATOR_INDEX.toString());
     validator = await initWallet(client, validatorWalletKey.publicKey, -1);
     console.log(`validator contract address: ${validator.address.toFriendly()}`);
-    console.log(`https://tonsandbox.com/explorer/address/${validator.address.toFriendly()}`);
+    console.log(`https://testnet.tonapi.io/account/${validator.address.toFriendly()}`);
 
     otherWalletKey = await initDeployKey("-1");
     otherWalletContract = await initWallet(client, otherWalletKey.publicKey, -1);
     console.log(`other wallet contract address: ${otherWalletContract.address.toFriendly()}`);
-    console.log(`https://tonsandbox.com/explorer/address/${otherWalletContract.address.toFriendly()}`);
+    console.log(`https://testnet.tonapi.io/account/${otherWalletContract.address.toFriendly()}`);
 
-    nominatorContract = await deployNominator(client, deployWallet, owner.address, validator.address, deployWalletKey.secretKey);
+
+    nominatorContract = await deployNominator(client, deployWallet, owner.address, owner.address, deployWalletKey.secretKey);
     console.log(`nominator contract address: ${nominatorContract.address.toFriendly()}`);
-    console.log(`https://tonsandbox.com/explorer/address/${nominatorContract.address.toFriendly()}`);
+    console.log(`https://testnet.tonapi.io/account/${nominatorContract.address.toFriendly()}`);
+    
 
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     if (balance < NOMINATOR_MIN_TON) {
@@ -263,20 +274,20 @@ describe("e2e test suite", () => {
     res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, 0.1, payload);
     await sleep(BLOCK_TIME);
 
-	res = await client.getTransactions(nominatorContract.address, {limit: 1});
-    res = parseTxDetails(res[0]);
-  	expect(res.description.computePhase.exitCode).to.eq(INSUFFICIENT_ELECTOR_FEE);
-    expect(res.time).closeTo(Date.now() / 1000, 30);
-  });
+    res = await client.getTransactions(nominatorContract.address, {limit: 1});
+      res = parseTxDetails(res[0]);
+      expect(res.description.computePhase.exitCode).to.eq(INSUFFICIENT_ELECTOR_FEE);
+      expect(res.time).closeTo(Date.now() / 1000, 30);
+    });
 
   it("send NEW_STAKE with query_id=0 should fail (WRONG_QUERY_ID)", async () => {
     payload = partialNewStakeMsg(0);
     res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
-	res = await client.getTransactions(nominatorContract.address, {limit: 1});
+	  res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.description.computePhase.exitCode).to.eq(WRONG_QUERY_ID);
+    expect(res.description.computePhase.exitCode).to.eq(WRONG_QUERY_ID);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
@@ -287,7 +298,7 @@ describe("e2e test suite", () => {
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.description.computePhase.exitCode).to.eq(CELL_UNDERFLOW);
+    expect(res.description.computePhase.exitCode).to.eq(CELL_UNDERFLOW);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
@@ -298,8 +309,8 @@ describe("e2e test suite", () => {
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
-  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
+    expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
+    expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
@@ -310,9 +321,9 @@ describe("e2e test suite", () => {
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.bounced).to.eq(false);
-  	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
-  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(SEND_MSG_VALUE, 0.2);
+    expect(res.inMessage.info.bounced).to.eq(false);
+    expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
+    expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(SEND_MSG_VALUE, 0.2);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
@@ -323,8 +334,8 @@ describe("e2e test suite", () => {
 
 	res = await client.getTransactions(nominatorContract.address, {limit: 1});
     res = parseTxDetails(res[0]);
-  	console.log(res);
-  	expect(res.description.computePhase.exitCode).to.eq(CELL_UNDERFLOW);
+    console.log(res);
+    expect(res.description.computePhase.exitCode).to.eq(CELL_UNDERFLOW);
     expect(res.time).closeTo(Date.now() / 1000, 30);
   });
 
@@ -346,7 +357,7 @@ describe("e2e test suite", () => {
     expect(newBalance).to.closeTo(balance + NOMINATOR_MIN_TON * 2, 0.2);
   });
 
-  it("send WITHDRAW from validator should fail", async () => {
+  it.only("send WITHDRAW from validator should fail", async () => {
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(balance.toFixed(2))).endCell();
     res = await sendTxToNominator(validator, validatorWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
@@ -355,8 +366,99 @@ describe("e2e test suite", () => {
     expect(newBalance).closeTo(balance + SEND_MSG_VALUE, 0.2);
   });
 
+  it("send WITHDRAW from validator should deduct from fund not enough gas", async () => {
+    
+    const withdrawAmount = 0.5;
+    payload = beginCell().storeUint(WITHDRAW, 32).storeUint(0, 64).storeCoins(toNano(withdrawAmount.toFixed(2))).endCell();
+    const MINIMAL_GAS_MONEY = 0.05;
+    let res = await sendTxToNominator(owner, deployWalletKey.secretKey, Address.parse("Ef__kzBtDfpgUz7gbKNo6MQYyaQ0kcaoEEMh9nO9VFln2LNQ"), MINIMAL_GAS_MONEY, payload);
+    await sleep(BLOCK_TIME);
+    newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
+    expect(newBalance).closeTo(balance + SEND_MSG_VALUE, 0.2);
+  });
+
+
+  it("Send pico tons to SN", async () => {
+      let value = 0.000001;  
+
+      const MY_SN = Address.parse("Ef__kzBtDfpgUz7gbKNo6MQYyaQ0kcaoEEMh9nO9VFln2LNQ")
+      let seqno = await owner.getSeqNo();
+
+      const transfer = await owner.createTransfer({
+        secretKey: deployWalletKey.secretKey,
+        seqno: seqno,
+        sendMode: 1 + 2,
+        order: new InternalMessage({
+          to: MY_SN,
+          value: toNano(value ),
+          bounce: true,
+          body: new CommonMessageInfo({
+            body: new EmptyMessage()
+          }),
+        }),
+      });
+
+      try {
+        await client.sendExternalMessage(owner, transfer);
+      } catch (e) {
+        return false;
+      }
+
+      console.log(`- transaction sent successfully to nominator at -> ${MY_SN.toFriendly()} [wallet seqno:${seqno}]`);
+      await sleep(BLOCK_TIME);
+    
+
+  });
+
+
+  it("print balance of SN", async () => {
+    let withdrawAmount = await client.getBalance(nominatorContract.address);
+    //withdrawAmount = withdrawAmount.sub(toNano(0.00005))
+    
+    console.log({withdrawAmount: fromNano(withdrawAmount)});
+    return;
+
+  });
+
+  it("withdraw all funds from SN using mode 128 and SEND-RAW-MESSAGE emergency API", async () => {
+  
+      let mode = 128;
+      let queryId = 777717;
+      let payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(queryId, 64)
+      .storeUint(mode, 8).storeRef(
+          beginCell()
+          .storeUint(0x18, 6).storeAddress(owner.address).storeCoins(toNano(0.1))
+          .storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+          .endCell()
+      ).endCell();
+  
+  
+        const MY_SN = Address.parse("Ef-BwKen4yPmPJpar8JK4dyygP4OzACy_1Emgg6KAW-4vEEc")
+  
+        res = await sendTxToNominator(owner, deployWalletKey.secretKey, MY_SN, 0.1, payload);
+        await sleep(BLOCK_TIME);
+  
+        res = await client.getTransactions(MY_SN, {limit: 1});
+        res = parseTxDetails(res[0]);
+        expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
+        expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
+        expect(res.time).closeTo(Date.now() / 1000, 30);
+  
+  });
+
+  it("withdraw all funds from SN", async () => {
+    
+    let balance = await client.getBalance(nominatorContract.address);
+    console.log({balance: fromNano(balance)});
+    
+    let state = await client.getContractState(nominatorContract.address)
+    console.log(Cell.fromBoc(state.data as Buffer).toString());
+    console.log(Cell.fromBoc(state.code as Buffer).toString());
+    
+  });
+
   it("change validator from owner", async () => {
-	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
+	  res = await client.callGetMethod(nominatorContract.address, 'get_roles');
     let validator_addr_before_change = bytesToAddress(res.stack[1][1].bytes);
     expect(validator_addr_before_change.toFriendly()).to.eq(validator.address.toFriendly());
 
@@ -392,43 +494,67 @@ describe("e2e test suite", () => {
     expect(validator_addr_after_change.toFriendly()).to.eq(validator.address.toFriendly());
   });
 
-  it("send NEW_STAKE from owner using SEND_RAW_MSG, stake should be returned", async () => {
-	let mode = 64;
-  	payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(1, 64)
+  it("send RECOVER_STAKE from owner using SEND_RAW_MSG, stake should be returned", async () => {
+    let mode = 64;
+    let queryId = 777717;
+  	let payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(queryId, 64)
   	.storeUint(mode, 8).storeRef(
-		beginCell()
-			.storeUint(0x18, 6).storeAddress(elector).storeCoins(toNano(STAKE_AMOUNT.toFixed(2)))
-			.storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-			.storeRef(
-				beginCell().storeUint(NEW_STAKE, 32).storeUint(1, 64)
-				.storeUint(0, 256) // validator_pubkey
-				.storeUint(0, 32) // stake_at
-				.storeUint(0, 32) // max_factor
-				.storeUint(0, 256) // adnl_addr
-			.endCell())
-		.endCell())
-  	.endCell();
+        beginCell()
+			  .storeUint(0x18, 6).storeAddress(elector).storeCoins(toNano(1.1))
+          .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+          .storeRef(beginCell().storeUint(RECOVER_STAKE, 32).storeUint(queryId, 64).endCell())
+          .endCell()
+      )
+      .endCell();
 
-    res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
-    await sleep(BLOCK_TIME);
 
-	res = await client.getTransactions(nominatorContract.address, {limit: 1});
-    res = parseTxDetails(res[0]);
-  	expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
-  	expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
-    expect(res.time).closeTo(Date.now() / 1000, 30);
+      
+
+      res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, 0.1, payload);
+      await sleep(BLOCK_TIME);
+
+      res = await client.getTransactions(nominatorContract.address, {limit: 1});
+      res = parseTxDetails(res[0]);
+      expect(res.inMessage.info.src.toFriendly()).to.eq(elector.toFriendly());
+      expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
+      expect(res.time).closeTo(Date.now() / 1000, 30);
   });
+
+  it("send TON (manual withdraw) from owner using SEND_RAW_MSG", async () => {
+    const WITHDRAW_AMOUNT = 1.212;
+    let mode = 64;
+    let queryId = 37717;
+  	let payload = beginCell().storeUint(SEND_RAW_MSG, 32).storeUint(queryId, 64)
+  	.storeUint(mode, 8).storeRef(
+        beginCell()
+			  .storeUint(0x18, 6).storeAddress(owner.address).storeCoins(toNano(WITHDRAW_AMOUNT))
+          .storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+          .endCell()
+      )
+      .endCell();
+
+      res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, 0.1, payload);
+      await sleep(BLOCK_TIME);
+
+      res = await client.getTransactions(nominatorContract.address, {limit: 1});
+      res = parseTxDetails(res[0]);
+      expect(res.inMessage.info.src.toFriendly()).to.eq(owner.address.toFriendly());
+      expect(Number(fromNano(res.inMessage.info.value.coins))).closeTo(STAKE_AMOUNT + SEND_MSG_VALUE, 0.3);
+      expect(res.time).closeTo(Date.now() / 1000, 30);
+  });
+
+
 
   it("send upgrade from owner", async () => {
 
 	res = await client.callGetMethod(nominatorContract.address, 'get_roles');
-	expected_owner = bytesToAddress(res.stack[0][1].bytes);
+    expected_owner = bytesToAddress(res.stack[0][1].bytes);
     expect(expected_owner.toFriendly()).to.eq(owner.address.toFriendly());
 
     balance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
 
-	let codeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "test/contracts/test-upgrade.fc"]);
-	let code = Cell.fromBoc(codeB64);
+    let codeB64: string = compileFuncToB64(["contracts/imports/stdlib.fc", "test/contracts/test-upgrade.fc"]);
+    let code = Cell.fromBoc(codeB64);
 
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
@@ -436,11 +562,11 @@ describe("e2e test suite", () => {
     res = await sendTxToNominator(owner, deployWalletKey.secretKey, nominatorContract.address, SEND_MSG_VALUE, payload);
     await sleep(BLOCK_TIME);
 
-	res = await client.callGetMethod(nominatorContract.address, 'magic');
+	  res = await client.callGetMethod(nominatorContract.address, 'magic');
     expect(res.stack[0][1]).to.eq('0xcafe');
 
-	codeB64 = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
-	code = Cell.fromBoc(codeB64);
+    codeB64 = compileFuncToB64(["contracts/imports/stdlib.fc", "contracts/single-nominator.fc"]);
+    code = Cell.fromBoc(codeB64);
 
   	payload = beginCell().storeUint(UPGRADE, 32).storeUint(1, 64)
   	.storeRef(code[0]).endCell();
@@ -455,12 +581,10 @@ describe("e2e test suite", () => {
     newBalance = parseFloat(fromNano((await client.getBalance(nominatorContract.address)).toNumber()));
     expect(newBalance).closeTo(balance + 2 * SEND_MSG_VALUE, 0.35);
   });
-
 });
 
-
 function bytesToAddress(bufferB64: string) {
-    const buff = Buffer.from(bufferB64, "base64");
-    let c2 = Cell.fromBoc(buff);
-    return c2[0].beginParse().readAddress() as Address;
+  const buff = Buffer.from(bufferB64, "base64");
+  let c2 = Cell.fromBoc(buff);
+  return c2[0].beginParse().readAddress() as Address;
 }

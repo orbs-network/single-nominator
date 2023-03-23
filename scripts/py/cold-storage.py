@@ -43,7 +43,7 @@ def parse_args():
 
 def validate_args(args):
     assert path.exists(args.pk_filename + '.pk'), "pk file was not found"
-    assert path.exists(args.pk_filename + '.addr'), "addr file was not found"
+    assert path.exists(args.pk_filename + '.addr'), "addr file was not found "+ args.pk_filename+'.addr'
 
     if args.action == 'withdraw':
         assert args.withdraw_amount is not None, 'please provide withdraw_amount'
@@ -73,23 +73,21 @@ def sign_tx(args, boc_filename=None):
     system(wallet_cmd)
 
 
-def print_qr_code():
+def print_boc_path():
     boc_output = BOC_OUTPUT_FILE_NAME + ".boc"
 
     assert path.exists(boc_output), " {} was not found".format(boc_output)
+    print("Boc saved at")
+    print(boc_output)
 
-    with open(boc_output, "rb") as f:
-        boc_buffer = f.read()
-
-    boc_base64 = base64.b64encode(boc_buffer).decode()
-    url = BOC_PARSER_ESTIMATOR + boc_base64
-    print(url)
-    system("qr '{}' ".format(url))
-
+def create_addr(destination):
+       cmd = './fift -s str-to-addr.fif ' + destination
+       system(cmd) 
 
 def main():
 
     args = parse_args()
+    create_addr(args.destination)
     validate_args(args)
 
     system("export FIFTPATH='/home/amnesia/Tor Browser/fiftpath/fift/lib'")
@@ -97,16 +95,16 @@ def main():
     if args.action == 'withdraw':
         system('./fift -s withdraw.fif {}'.format(args.withdraw_amount))
         sign_tx(args, "withdraw.boc")
-        print_qr_code()
+        print_boc_path()
 
     elif args.action == 'set-validator':
         system('./fift -s change-validator.fif {}'.format(args.new_validator_address))
         sign_tx(args, "change-validator.boc")
-        print_qr_code()
+        print_boc_path()
 
     elif args.action == 'transfer':
         sign_tx(args)
-        print_qr_code()
+        print_boc_path()
 
 
 main()

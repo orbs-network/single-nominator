@@ -13,6 +13,14 @@ This smart contract is intended to be the go-to solution for TON validators that
 
 See a more detailed [comparison of existing alternatives](#comparison-of-existing-alternatives) below.
 
+## Official code hash
+
+Check this in https://verifier.ton.org before sending funds to a live contract
+
+```
+pCrmnqx2/+DkUtPU8T04ehTkbAGlqtul/B2JPmxx9bo=
+```
+
 &nbsp;
 
 ## Architecture

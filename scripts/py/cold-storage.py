@@ -6,7 +6,7 @@ from os import system
 WALLET_ID = 698983191
 TIMEOUT = 86400
 BOC_PARSER_ESTIMATOR = "https://ton-defi-org.github.io/boc-parser-estimator/#"
-BOC_OUTPUT_FILE_NAME = "boc-output"
+BOC_OUTPUT_FILE_NAME = "signed-tx"
 
 
 def parse_args():
@@ -15,9 +15,9 @@ def parse_args():
         description="Send message from wallet to single-nominator from cold storage. Action can be withdraw, set-validator or transfer funds. User should have pk ready for use and .addr file of the "
         "wallet.\n\n"
         "Examples:\n" 
-        "1. python3 scripts/fift/cold-storage.py -a withdraw -p mywallet -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL\n"
-        "2. python3 scripts/fift/cold-storage.py -a set-validator -p mywallet -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -n Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU\n"
-        "3. python3 scripts/fift/cold-storage.py -a transfer -p mywallet -s 3 -t 1000 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL\n",
+        "1. python3 cold-storage.py -a withdraw -p C8 -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -w 250\n"
+        "2. python3 cold-storage.py -a set-validator -p C8 -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -n Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU\n"
+        "3. python3 cold-storage.py -a transfer -p C8 -s 3 -t 1000 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL\n",
         epilog="Thanks for using %(prog)s app",
         formatter_class=argparse.RawTextHelpFormatter
     )
@@ -36,6 +36,8 @@ def parse_args():
                         help='The amount of ton to to withdraw from single nominator')
     parser.add_argument('--new_validator_address', '-n', type=str,
                         help='The new validator address for the set-validator action')
+    parser.add_argument('--comment', '-c', type=str,
+                        help='A comment string for the transaction (only considered for transfer action)')
 
     args = parser.parse_args()
     return args
@@ -54,6 +56,9 @@ def validate_args(args):
 
 def sign_tx(args, boc_filename=None):
 
+    if args.action == 'transfer' and args.comment:
+        comment_arg = f'--comment {args.comment}'
+
     if boc_filename:
         assert path.exists(boc_filename), " {} doesn't exists".format(boc_filename)
         wallet_cmd = './fift -s wallet-v3.fif {pk} {destination} {wallet_id} {seqno} {amount} --timeout {timeout} -B {boc_filename} {boc_output}' \
@@ -64,14 +69,14 @@ def sign_tx(args, boc_filename=None):
                     boc_filename=boc_filename,
                     boc_output=BOC_OUTPUT_FILE_NAME)
     else:
-        wallet_cmd = './fift -s wallet-v3.fif {pk} {destination} {wallet_id} {seqno} {amount} --timeout {timeout} {boc_output}' \
+        wallet_cmd = './fift -s wallet-v3.fif {pk} {destination} {wallet_id} {seqno} {amount} --timeout {timeout} {boc_output} {comment_arg}' \
             .format(pk=args.pk_filename,
                     destination=args.destination, wallet_id=WALLET_ID,
                     seqno=args.seqno, amount=args.ton_amount, timeout=TIMEOUT,
-                    boc_output=BOC_OUTPUT_FILE_NAME)
+                    boc_output=BOC_OUTPUT_FILE_NAME,
+                    comment_arg=comment_arg)
 
     system(wallet_cmd)
-
 
 def print_boc_path():
     boc_output = BOC_OUTPUT_FILE_NAME + ".boc"
@@ -105,6 +110,5 @@ def main():
     elif args.action == 'transfer':
         sign_tx(args)
         print_boc_path()
-
 
 main()

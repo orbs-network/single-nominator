@@ -17,13 +17,14 @@ def parse_args():
         "Examples:\n" 
         "1. python3 cold-storage.py -a withdraw -p C8 -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -w 250\n"
         "2. python3 cold-storage.py -a set-validator -p C8 -s 3 -t 1 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -n Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU\n"
-        "3. python3 cold-storage.py -a transfer -p C8 -s 3 -t 1000 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL\n",
+        "3. python3 cold-storage.py -a transfer -p C8 -s 3 -t 1000 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -c optional_comment\n"
+        "4. python3 cold-storage.py -a transfer -p C8 -s 3 -t 1000 -d EQBd31Rl7zrpOjGuTA7PEwmuFPFvacTF8o1HDdcQDG30huZL -c optional_comment\n",
         epilog="Thanks for using %(prog)s app",
         formatter_class=argparse.RawTextHelpFormatter
     )
 
     parser.add_argument('--action', '-a', choices=[
-        'withdraw', 'set-validator', 'transfer'], help='The action to perform', required=True)
+        'withdraw', 'set-validator', 'transfer', "dns-renewal"], help='The action to perform', required=True)
     parser.add_argument('--pk_filename', '-p', type=str,
                         help='The filename (without extension) of the private key which is used to sign the transaction', required=True)
     parser.add_argument('--seqno', '-s', type=int,
@@ -37,7 +38,7 @@ def parse_args():
     parser.add_argument('--new_validator_address', '-n', type=str,
                         help='The new validator address for the set-validator action')
     parser.add_argument('--comment', '-c', type=str,
-                        help='A comment string for the transaction (only considered for transfer action)')
+                        help='A comment string for the transaction (only considered for transfer action)', required=False)
 
     args = parser.parse_args()
     return args
@@ -55,7 +56,7 @@ def validate_args(args):
 
 
 def sign_tx(args, boc_filename=None):
-
+    comment_arg = ''
     if args.action == 'transfer' and args.comment:
         comment_arg = f'--comment {args.comment}'
 
@@ -105,6 +106,11 @@ def main():
     elif args.action == 'set-validator':
         system('./fift -s change-validator.fif {}'.format(args.new_validator_address))
         sign_tx(args, "change-validator.boc")
+        print_boc_path()
+
+    elif args.action == 'dns-renewal':
+        system('./fift -s dns-renewal.fif')
+        sign_tx(args, "dns-renewal.boc")
         print_boc_path()
 
     elif args.action == 'transfer':

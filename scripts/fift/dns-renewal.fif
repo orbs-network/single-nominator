@@ -1,0 +1,14 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+
+{ ."usage: " @' $0 type ." [<savefile>]" cr
+  ."Creates the message body to be sent from the nft domain owner, the message updates the renewal of the domain  ." cr
+  ."The result is saved into <savefile> (`recover-query.boc` by default) and output in hexadecimal form, to be sent later as the body of a message from the wallet to elections smart contract, along with a small value (say, one Gram) to cover forwarding and processing fees" cr 1 halt
+} : usage
+
+
+
+<b x{4eb1f0f9} s, 0 64 u, 0 256 u, b>
+cr ."Message body is " dup <s csr. cr
+
+2 boc+>B "dns-renewal.boc" tuck B>file ."Saved to file " type cr

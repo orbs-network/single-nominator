@@ -119,6 +119,11 @@ If you have a single nominator that holds all stake for validation, this is the 
 
 ## Using this contract
 
+* We created a simple open-source client to deploy and interact with the contract - https://github.com/orbs-network/single-nominator-client
+* If you run into trouble, you can ask the team for support on [Telegram](https://t.me/single_nominator)
+
+### Doing everything yourself
+
 * Review the [contract](https://github.com/orbs-network/single-nominator/blob/main/contracts/single-nominator.fc) and tests to make sure you're happy with the implementation
 * Install the project using `npm install` (make sure you have all dependencies from [tonstarter](https://github.com/ton-defi-org/tonstarter-contracts))
 * Build the contract using `npm run build`

@@ -11,7 +11,7 @@ import path from "path";
 import process from "process";
 import child_process from "child_process";
 import glob from "fast-glob";
-import { Cell } from "ton";
+import { Cell } from "@ton/ton";
 import semver from "semver";
 
 async function main() {

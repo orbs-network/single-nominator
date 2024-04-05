@@ -90,6 +90,22 @@ function sendWithdrawToNominator(nominatorAddr: Address, withdrawAmount: number)
 
 }
 
+function sendWithdrawToVesting(vestingWalletAddr: Address, withdrawAmount: number) {
+  return beginCell()
+  				.storeUint(OP_SEND, 32)
+  				.storeUint(OP_RETURN_EXCESS_QUERY_ID, 64)
+  				.storeUint(SEND_MODE_IGNORE_ERRORS + SEND_MODE_PAY_FEES_SEPARETELY, 8)
+          .storeRef(
+            beginCell()
+            .storeUint(0x18, 6)
+            .storeAddress(vestingWalletAddr)
+            .storeCoins(toNano(withdrawAmount))
+            .storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+          .endCell())
+		    .endCell();  
+
+}
+
 function sendChangeValidatorToNominator(nominatorAddr: Address, newValidatorAddr: Address) {
   return beginCell()
   				.storeUint(OP_SEND, 32)
@@ -270,7 +286,7 @@ describe("e2e test suite", () => {
   });
 
   it.only("Withdraw all funds (including locked) to vesting wallet ", async () => {
-    const payload = sendWithdrawToNominator(vestingSenderWallet.address, 2);
+    const payload = sendWithdrawToVesting(vestingSenderWallet.address, 2);
     res = await sendTxVestingContract(deployWallet, deployWalletKey.secretKey, VESTING_CONTRACT_ADDRESS, payload);
     await sleep(BLOCK_TIME);
   });
@@ -287,7 +303,7 @@ describe("e2e test suite", () => {
     await sleep(BLOCK_TIME);
   });
 
-  it.only("Send withdraw to single nominator from vesting contract", async () => {
+  it("Send withdraw to single nominator from vesting contract", async () => {
     const payload = sendFundsToOwner(deployWallet.address);
     res = await sendTxVestingContract(deployWallet, deployWalletKey.secretKey, VESTING_CONTRACT_ADDRESS, payload);
     await sleep(BLOCK_TIME);

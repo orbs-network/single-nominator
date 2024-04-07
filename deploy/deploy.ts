@@ -24,8 +24,8 @@ async function deploy() {
 
 	const seqno = await deployWallet.getSeqNo();
 	const transfer = await deployWallet.createTransfer({
-		secretKey: deployWalletKey.secretKey,
-		seqno: seqno,
+		secretKey: deployWalletKey,
+		seqno: seqno,.secretKey
 		sendMode: 1 + 2,
 		order: new InternalMessage({
 			to: contract.address,

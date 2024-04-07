@@ -5,6 +5,7 @@ import { Address, CellMessage, CommonMessageInfo, InternalMessage, TonClient, Wa
 import {waitForSeqno, compileFuncToB64} from "./helpers";
 import { expect } from "chai";
 import {Buffer} from "buffer";
+import fs from "fs";
 
 const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
 
@@ -52,8 +53,8 @@ const OP_ADD_WHITELIST = 0x7258a69b
 const OP_SEND_RESPONSE = 0xf7733acd;
 const OP_RETURN_EXCESS_QUERY_ID = 0x7000;
 
-const VESTING_CONTRACT_ADDRESS =  Address.parse('EQDCSGSPwsm3uUepnZnkGUJDQiolseqchQLdxO_0cKJ2MujJ') // 'EQCgRxFm2_5fkk1apEg_Ekj3NHktloPw7o2gd3qRFFTS3W2o'
-const SN_CONTRACT_ADDRESS = Address.parse('Ef9bs--58zwqYK12NTgkRVFeeHNwY_9wGR8yxUB5Z5KYRXJD'); // Ef-zbW4OzGgarSvJcVS9PAjzF7jpIZzHNn_ck8vRyNPa5RjR
+const VESTING_CONTRACT_ADDRESS =  Address.parse('EQCp6Sso2bKZzFN6pLhtH7SsenWB333UH1PzngPAao6N7KLC') // EQDCSGSPwsm3uUepnZnkGUJDQiolseqchQLdxO_0cKJ2MujJ, 'EQCgRxFm2_5fkk1apEg_Ekj3NHktloPw7o2gd3qRFFTS3W2o'
+const SN_CONTRACT_ADDRESS = Address.parse('Ef8-XReK_pzMGC-o3O-3_gLCf4LQ8p5mgUbnNrCELYjcI3Nm'); // Ef9bs--58zwqYK12NTgkRVFeeHNwY_9wGR8yxUB5Z5KYRXJD, Ef-zbW4OzGgarSvJcVS9PAjzF7jpIZzHNn_ck8vRyNPa5RjR
 
 function sendDepositToNominator(nominatorAddr: Address) {
   return beginCell()
@@ -244,7 +245,7 @@ describe("e2e test suite", () => {
     deployWalletKey = await initDeployKey("");    
     deployWallet = await initWallet(client, deployWalletKey.publicKey);
     owner = deployWallet;
-
+      
     vestingSenderKey = await initDeployKey("1");
     vestingSenderWallet = await initWallet(client, vestingSenderKey.publicKey);
 
@@ -266,7 +267,7 @@ describe("e2e test suite", () => {
 
   });
 
-  it("Add whitelist", async () => {
+  it.only("Add whitelist", async () => {
     const payload = addWhitelist(SN_CONTRACT_ADDRESS);
     res = await sendTxVestingContract(vestingSenderWallet, vestingSenderKey.secretKey, VESTING_CONTRACT_ADDRESS, payload);
     await sleep(BLOCK_TIME);
@@ -285,7 +286,7 @@ describe("e2e test suite", () => {
     await sleep(BLOCK_TIME);
   });
 
-  it.only("Withdraw all funds (including locked) to vesting wallet ", async () => {
+  it("Withdraw all funds (including locked) to vesting wallet ", async () => {
     const payload = sendWithdrawToVesting(vestingSenderWallet.address, 2);
     res = await sendTxVestingContract(deployWallet, deployWalletKey.secretKey, VESTING_CONTRACT_ADDRESS, payload);
     await sleep(BLOCK_TIME);

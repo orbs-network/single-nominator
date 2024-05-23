@@ -85,6 +85,7 @@ export async function initDeployKey(index = '') {
 
 export function compileFuncToB64(funcFiles: string[]): string {
     const funcPath = process.env.FUNC_PATH || "/usr/local/bin/func";
+    const fiftPath = process.env.FIFT_PATH || "/usr/local/bin/fift";
     try {
         execSync(`${funcPath} -o build/tmp.fif  -SPA ${funcFiles.join(" ")}`);
     } catch (e: any) {
@@ -101,7 +102,7 @@ to set custom path to your func compiler please set  the env variable "export FU
         }
     }
 
-    const stdOut = execSync(`/usr/local/bin/fift -s build/_print-hex.fif`).toString();
+    const stdOut = execSync(`${fiftPath} -s build/_print-hex.fif`).toString();
     return stdOut.trim();
 }
 

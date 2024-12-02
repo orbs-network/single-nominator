@@ -326,7 +326,8 @@ describe('Single nominator pool', () => {
         });
         expect(res.transactions).not.toHaveTransaction({
           on: testWallet.address,
-          from: pool.address
+          from: pool.address,
+          inMessageBounced: false
         });
         expect(await getContractData(pool.address)).toEqualCell(stateBefore);
       }

@@ -14,9 +14,8 @@ dotenv.config();
 import fs from "fs";
 import path from "path";
 import glob from "fast-glob";
-import { Address, Cell, CellMessage, CommonMessageInfo, fromNano, InternalMessage, StateInit, toNano } from "ton";
-import { TonClient, WalletContract, WalletV3R2Source, contractAddress, SendMode } from "ton";
-import { mnemonicNew, mnemonicToWalletKey } from "ton-crypto";
+import { Address, Cell, TonClient, WalletContractV3R2, SendMode, OpenedContract, contractAddress, internal, fromNano, toNano } from "@ton/ton";
+import { mnemonicNew, mnemonicToWalletKey } from "@ton/crypto";
 
 async function main() {
   console.log(`=================================================================`);
@@ -53,10 +52,10 @@ async function main() {
 
   // open the wallet and make sure it has enough TON
   const walletKey = await mnemonicToWalletKey(deployerMnemonic.split(" "));
-  const walletContract = WalletContract.create(client, WalletV3R2Source.create({ publicKey: walletKey.publicKey, workchain }));
-  console.log(` - Wallet address used to deploy from is: ${walletContract.address.toFriendly()}`);
-  const walletBalance = await client.getBalance(walletContract.address);
-  if (walletBalance.lt(toNano(0.2))) {
+  const walletContract = client.open(WalletContractV3R2.create({ publicKey: walletKey.publicKey, workchain }));
+  console.log(` - Wallet address used to deploy from is: ${walletContract.address.toString()}`);
+  const walletBalance = await walletContract.getBalance();
+  if (walletBalance < toNano(0.2)) {
     console.log(` - ERROR: Wallet has less than 0.2 TON for gas (${fromNano(walletBalance)} TON), please send some TON for gas first`);
     process.exit(1);
   } else {
@@ -94,8 +93,8 @@ async function main() {
     const initCodeCell = Cell.fromBoc(JSON.parse(fs.readFileSync(hexArtifact).toString()).hex)[0];
 
     // make sure the contract was not already deployed
-    const newContractAddress = contractAddress({ workchain, initialData: initDataCell, initialCode: initCodeCell });
-    console.log(` - Based on your init code+data, your new contract address is: ${newContractAddress.toFriendly()}`);
+    const newContractAddress = contractAddress(workchain, { data: initDataCell, code: initCodeCell });
+    console.log(` - Based on your init code+data, your new contract address is: ${newContractAddress.toString()}`);
     if (await client.isContractDeployed(newContractAddress)) {
       console.log(` - Looks like the contract is already deployed in this address, skipping deployment`);
       await performPostDeploymentTest(rootContract, deployInitScript, walletContract, walletKey.secretKey, newContractAddress);
@@ -104,39 +103,39 @@ async function main() {
 
     // deploy by sending an internal message to the deploying wallet
     console.log(` - Let's deploy the contract on-chain..`);
-    const seqno = await walletContract.getSeqNo();
+    const seqno = await walletContract.getSeqno();
     const transfer = walletContract.createTransfer({
       secretKey: walletKey.secretKey,
       seqno: seqno,
-      sendMode: SendMode.PAY_GAS_SEPARATLY + SendMode.IGNORE_ERRORS,
-      order: new InternalMessage({
-        to: newContractAddress,
-        value: newContractFunding,
-        bounce: false,
-        body: new CommonMessageInfo({
-          stateInit: new StateInit({ data: initDataCell, code: initCodeCell }),
-          body: initMessageCell !== null ? new CellMessage(initMessageCell) : null,
+      sendMode: SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS,
+      messages: [
+        internal({
+          to: newContractAddress,
+          value: newContractFunding,
+          bounce: false,
+          body: initMessageCell !== null ? initMessageCell : null,
+          init: { data: initDataCell, code: initCodeCell },
         }),
-      }),
+      ],
     });
     await client.sendExternalMessage(walletContract, transfer);
     console.log(` - Deploy transaction sent successfully`);
 
     // make sure that the contract was deployed
-    console.log(` - Block explorer link: https://${process.env.TESTNET ? "test." : ""}tonwhales.com/explorer/address/${newContractAddress.toFriendly()}`);
+    console.log(` - Block explorer link: https://${process.env.TESTNET ? "test." : ""}tonwhales.com/explorer/address/${newContractAddress.toString()}`);
     console.log(` - Waiting up to 20 seconds to check if the contract was actually deployed..`);
     for (let attempt = 0; attempt < 10; attempt++) {
       await sleep(2000);
-      const seqnoAfter = await walletContract.getSeqNo();
+      const seqnoAfter = await walletContract.getSeqno();
       if (seqnoAfter > seqno) break;
     }
     if (await client.isContractDeployed(newContractAddress)) {
-      console.log(` - SUCCESS! Contract deployed successfully to address: ${newContractAddress.toFriendly()}`);
+      console.log(` - SUCCESS! Contract deployed successfully to address: ${newContractAddress.toString()}`);
       const contractBalance = await client.getBalance(newContractAddress);
       console.log(` - New contract balance is now ${fromNano(contractBalance)} TON, make sure it has enough to pay rent`);
       await performPostDeploymentTest(rootContract, deployInitScript, walletContract, walletKey.secretKey, newContractAddress);
     } else {
-      console.log(` - FAILURE! Contract address still looks uninitialized: ${newContractAddress.toFriendly()}`);
+      console.log(` - FAILURE! Contract address still looks uninitialized: ${newContractAddress.toString()}`);
     }
   }
 
@@ -151,7 +150,13 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function performPostDeploymentTest(rootContract: string, deployInitScript: any, walletContract: WalletContract, secretKey: Buffer, newContractAddress: Address) {
+async function performPostDeploymentTest(
+  rootContract: string,
+  deployInitScript: any,
+  walletContract: OpenedContract<WalletContractV3R2>,
+  secretKey: Buffer,
+  newContractAddress: Address
+) {
   if (typeof deployInitScript.postDeployTest !== "function") {
     console.log(` - Not running a post deployment test, '${rootContract}' does not have 'postDeployTest()' function`);
     return;

@@ -17,8 +17,15 @@ See a more detailed [comparison of existing alternatives](#comparison-of-existin
 
 Check this in https://verifier.ton.org before sending funds to a live contract
 
+
+Single nominator v1.0
 ```
 pCrmnqx2/+DkUtPU8T04ehTkbAGlqtul/B2JPmxx9bo=
+```
+
+Single nominator v1.1 (with withdrawals by comment)
+```
+zA05WJ6ywM/g/eKEVmV6O909lTlVrj+Y8lZkqzyQT70=
 ```
 
 &nbsp;

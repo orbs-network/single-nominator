@@ -1,4 +1,4 @@
-import { Address, beginCell, toNano } from "ton";
+import { Address, beginCell, toNano } from "@ton/core";
 import { toUrlSafe } from "./utils";
 const ZERO_ADDR = '-1:0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -9,7 +9,7 @@ function buildSetValidatorMessage(newValidator: Address) {
 
 export function changeValidator(nominator: Address, newValidator: Address) : string {
     const value = toNano(1);
-    return `https://app.tonkeeper.com/transfer/${nominator.toFriendly()}?amount=${value}&bin=${buildSetValidatorMessage(newValidator)}`;
+    return `https://app.tonkeeper.com/transfer/${nominator.toString()}?amount=${value}&bin=${buildSetValidatorMessage(newValidator)}`;
 }
 
 function generateChangeValidatorDeeplink(singleNominatorAddr: string, newValidatorAddr: string) {

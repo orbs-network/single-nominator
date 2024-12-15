@@ -4,7 +4,7 @@ import {client} from "./config";
 async function initDeployWallet() {
 	let deployWalletKey = await initDeployKey("");
 	let deployWallet = await initWallet(client, deployWalletKey.publicKey);
-	console.log(`deployWallet address: ${deployWallet.address.toFriendly()}`);
+	console.log(`deployWallet address: ${deployWallet.address.toString()}`);
 }
 
 initDeployWallet().then(
